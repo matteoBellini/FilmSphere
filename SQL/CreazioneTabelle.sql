@@ -92,3 +92,7 @@ create table Abbonamento(
     RisoluzioneMassima varchar(10) not null,
     Prezzo double not null
 );
+
+create table Critico(
+    CF varchar(16) primary key
+)
