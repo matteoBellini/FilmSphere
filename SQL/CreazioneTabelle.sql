@@ -2,7 +2,7 @@ create table Film(
 	ID integer not null primary key auto_increment,
     Titolo varchar(255) not null,
     Descrizione varchar(500) not null,
-    Durata integer not null,
+    Durata integer UNSIGNED not null,
     AnnoDiProduzione integer not null,
     Genere varchar(25) not null,
     Recensioni integer default 0,
@@ -22,7 +22,7 @@ create table Cineasta(
     Nome varchar(20) not null,
     Cognome varchar(20) not null,
     DataNascita date not null,
-    LuogoNascita varchar(30)
+    LuogoNascita varchar(30) not null
 );
 
 create table Recitazione(
@@ -43,14 +43,14 @@ create table Regia(
 create table PremiCineasta(
 	Id integer auto_increment primary key,
     Nome varchar(50)not null,
-    Importanza integer not null,
+    Importanza integer unsigned not null,
     Categoria varchar(50) not null
 );
 
 create table PremiFilm(
 	Id integer auto_increment primary key,
     Nome varchar(50)not null,
-    Importanza integer not null,
+    Importanza integer unsigned not null,
     Categoria varchar(50) not null
 );
 
@@ -79,18 +79,18 @@ create table Utente(
     Mail varchar(50) not null,
     PW varchar(100) not null,
     Telefono varchar(10) not null,
-    RinnovoAutomatico tinyint(1) not null,
+    RinnovoAutomatico bit(1) not null,
     TipoAbbonamento varchar(10),
     foreign key(TipoAbbonamento) references Abbonamento(Tipo)
 );
 
 create table Abbonamento(
 	Tipo varchar(10) primary key,
-    Durata integer not null,
-    NoData tinyint(1) not null,
-    NumeroDispositivi integer not null,
+    Durata integer unsigned not null,
+    NoData bit(1) not null,
+    NumeroDispositivi integer unsigned not null,
     RisoluzioneMassima varchar(10) not null,
-    Prezzo double not null
+    Prezzo double unsigned not null
 );
 
 create table Critico(
@@ -99,14 +99,14 @@ create table Critico(
     Cognome varchar(20) not null,
     DataNascita date not null,
     Sesso varchar(1) not null,
-    azienda varchar(10) not null
+    Azienda varchar(20) not null
 );
 
 create table Recensione(
 	CFUtente varchar(16) not null,
     IDFilm integer not null,
     Testo varchar(500),
-    Punteggio integer not null,
+    Punteggio integer unsigned not null,
     
     primary key(CFUtente, IDFilm),
     foreign key(CFUtente) references Utente(CF),
@@ -117,7 +117,7 @@ create table Critica(
 	CFUtente varchar(16) not null,
     IDFilm integer not null,
     Testo varchar(500),
-    Punteggio integer not null,
+    Punteggio integer unsigned not null,
     
     primary key(CFUtente, IDFilm),
     foreign key(CFUtente) references Utente(CF),
