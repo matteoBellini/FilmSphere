@@ -183,7 +183,9 @@ create table Produzione(
 create table Restrizione(
 	ID integer not null auto_increment,
     FormatoVideo varchar(5) not null,
-    FormatoAudio varchar(5) not null
+    FormatoAudio varchar(5) not null,
+
+    primary key(ID)
 );
 
 create table PaeseRestrizione(
@@ -234,7 +236,7 @@ create table File(
     QualitaAudio varchar(15) not null,
     QualitaVideo varchar(15) not null,
     AspectRatio varchar(10) not null,
-    DimensioneFile integer not null,
+    DimensioneFile double not null,
     LunghezzaVideo time not null,
     FormatoVideo varchar(5) not null,
     FormatoAudio varchar(5) not null,
@@ -257,7 +259,7 @@ create table FormatoVideo(
 	ID integer not null auto_increment primary key,
     Nome varchar(10) not null,
     Codec varchar(10) not null,
-    FPS integer not null,
+    FPS integer unsigned not null,
     DataRilascio date not null
 );
 
@@ -275,7 +277,7 @@ create table Audio(
 );
 
 create table Sottotitolo(
-	ßIDFile integer not null,
+	IDFile integer not null,
     Lingua varchar(20) not null,
     
     primary key(IDFile, Lingua),

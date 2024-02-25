@@ -151,3 +151,30 @@ BEGIN
 END $$
 DELIMITER ;
 
+
+-- Controllo che la data di rilascio di un Formato Audio sia corretta
+DROP TRIGGER IF EXISTS TFormatoAudio;
+DELIMITER $$
+CREATE TRIGGER TFormatoAudio BEFORE INSERT OR UPDATE ON FormatoAudio
+FOR EACH ROW
+BEGIN
+    IF NEW.DataRilascio > CURRENT_DATE THEN
+        SIGNAL SQL STATE '45000'
+        SET MESSAGE_TEXT = "Inseriemento di una Data di Rilascio non valida";
+    END IF;
+END $$
+DELIMITER ;
+
+
+-- Controllo che la data di rilascio di un Formato Video sia corretta
+DROP TRIGGER IF EXISTS TFormatoVideo;
+DELIMITER $$
+CREATE TRIGGER TFormatoVideo BEFORE INSERT OR UPDATE ON FormatoVideo
+FOR EACH ROW
+BEGIN
+    IF NEW.DataRilascio > CURRENT_DATE THEN
+        SIGNAL SQL STATE '45000'
+        SET MESSAGE_TEXT = "Inseriemento di una Data di Rilascio non valida";
+    END IF;
+END $$
+DELIMITER ;
