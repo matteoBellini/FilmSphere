@@ -130,9 +130,15 @@ create table Carta(
     NomeTitolare varchar(20) not null,
     DataScadenza date not null,
     CVV varchar(3) not null,
-    UtenteAssociato varchar(16) not null,
-    
-    foreign key(UtenteAssociato) references Utente(CF)
+);
+
+create table Preferenza(
+    NumCarta varchar(16),
+    CF varchar(16),
+
+    primary key(NumCarta, CF),
+    foreign key (NmCarta) REFERENCES Carta(Numero),
+    foreign key (CF) REFERENCES Utente(CF)
 );
 
 create table Fattura(
