@@ -151,7 +151,7 @@ create table Fattura(
     foreign key(NumeroCarta) references Carta(Numero),
     foreign key(Utente) references Utente(CF)
 );
-
+-- latitudine e longitudine aggiunte in radianti
 create table Dispositivo(
 	IndirizzoMAC varchar(17) not null primary key,
     Hardware varchar(20) not null,
@@ -202,7 +202,7 @@ create table PaeseRestrizione(
     foreign key(IDRestrizione) references Restrizione(ID),
     foreign key(Paese) references Paese(Nome)
 );
-
+-- latitudine e longitudine memorizzati in radianti
 create table Server(
 	IndirizzoIP varchar(15) not null primary key,
     Latitudine varchar(30) not null,
