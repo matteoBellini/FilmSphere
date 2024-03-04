@@ -161,8 +161,8 @@ create table Dispositivo(
     FineConnessione datetime,
     Utente varchar(16) not null,
     Paese varchar(20) not null,
-    Latitudine varchar(30),
-    Longitudine varchar(30),
+    Latitudine float,
+    Longitudine float,
     ServerConnesso varchar(15) not null,
     
     foreign key(Utente) references Utente(CF),
@@ -205,8 +205,8 @@ create table PaeseRestrizione(
 
 create table Server(
 	IndirizzoIP varchar(15) not null primary key,
-    Latitudine varchar(30) not null,
-    Longitudine varchar(30) not null,
+    Latitudine float not null,
+    Longitudine float not null,
     CAPBanda integer not null,
     CAPTrasmissione integer not null,
     DimensioneCache integer not null,
