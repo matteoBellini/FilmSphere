@@ -1,3 +1,4 @@
+drop table if exists Film;
 create table Film(
 	ID integer not null primary key auto_increment,
     Titolo varchar(255) not null,
@@ -13,10 +14,12 @@ create table Film(
     foreign key(Genere) references Genere(Nome)
 );
 
+drop table if exists Genere;
 create table Genere(
 	Nome varchar(25) primary key not null
 );
 
+drop table if exists Cineasta;
 create table Cineasta(
 	IdCineasta integer not null auto_increment primary key,
     Nome varchar(20) not null,
@@ -25,6 +28,7 @@ create table Cineasta(
     LuogoNascita varchar(30) not null
 );
 
+drop table if exists Recitazione;
 create table Recitazione(
 	IdCineasta integer,
     Film integer,
@@ -33,6 +37,7 @@ create table Recitazione(
     foreign key(Film) references Film(ID)
 );
 
+drop table if exists Regia;
 create table Regia(
 	IdCineasta integer,
     Film integer,
@@ -40,6 +45,7 @@ create table Regia(
     foreign key(Film) references Film(ID)
 );
 
+drop table if exists PremiCineasta;
 create table PremiCineasta(
 	Id integer auto_increment primary key,
     Nome varchar(50)not null,
@@ -47,6 +53,7 @@ create table PremiCineasta(
     Categoria varchar(50) not null
 );
 
+drop table if exists PremiFilm;
 create table PremiFilm(
 	Id integer auto_increment primary key,
     Nome varchar(50)not null,
@@ -54,6 +61,7 @@ create table PremiFilm(
     Categoria varchar(50) not null
 );
 
+drop table if exists Premiazione;
 create table Premiazione(
 	IdCineasta integer,
     IdPremio integer,
@@ -62,6 +70,7 @@ create table Premiazione(
     foreign key(IdPremio) references PremiCineasta(Id)
 );
 
+drop table if exists Vincita;
 create table Vincita(
 	IdFilm integer,
     IdPremio integer,
@@ -70,6 +79,7 @@ create table Vincita(
     foreign key(IdPremio) references PremiFilm(Id)
 );
 
+drop table if exists Utente;
 create table Utente(
 	CF varchar(16) primary key,
     Nome varchar(20) not null,
@@ -84,6 +94,7 @@ create table Utente(
     foreign key(TipoAbbonamento) references Abbonamento(Tipo)
 );
 
+drop table if exists Abbonamento;
 create table Abbonamento(
 	Tipo varchar(10) primary key,
     Durata integer unsigned not null,
@@ -93,6 +104,7 @@ create table Abbonamento(
     Prezzo double unsigned not null
 );
 
+drop table if exists Critico;
 create table Critico(
     CF varchar(16) primary key,
     Nome varchar(20) not null,
@@ -102,6 +114,7 @@ create table Critico(
     Azienda varchar(20) not null
 );
 
+drop table if exists Recensione;
 create table Recensione(
 	CFUtente varchar(16) not null,
     IDFilm integer not null,
@@ -113,6 +126,7 @@ create table Recensione(
     foreign key(IDFilm) references Film(ID)
 );
 
+drop table if exists Critica;
 create table Critica(
 	CFUtente varchar(16) not null,
     IDFilm integer not null,
@@ -124,6 +138,7 @@ create table Critica(
     foreign key(IDFilm) references Film(ID)
 );
 
+drop table if exists Carta;
 create table Carta(
 	Numero varchar(16) not null primary key,
     CognomeTitolare varchar(20) not null,
@@ -132,6 +147,7 @@ create table Carta(
     CVV varchar(3) not null,
 );
 
+drop table if exists Preferenza;
 create table Preferenza(
     NumCarta varchar(16),
     CF varchar(16),
@@ -141,6 +157,7 @@ create table Preferenza(
     foreign key (CF) REFERENCES Utente(CF)
 );
 
+drop table if exists Fattura;
 create table Fattura(
 	Numero integer not null auto_increment primary key,
     DataEmissione date not null,
@@ -152,6 +169,7 @@ create table Fattura(
     foreign key(Utente) references Utente(CF)
 );
 -- latitudine e longitudine aggiunte in radianti
+drop table if exists Dispositivo;
 create table Dispositivo(
 	IndirizzoMAC varchar(17) not null primary key,
     Hardware varchar(20) not null,
@@ -170,6 +188,7 @@ create table Dispositivo(
     foreign key(ServerConnesso) references Server(IndirizzoIP)
 );
 
+drop table if exists Paese;
 create table Paese(
 	Nome varchar(20) not null primary key,
     NumeroAbitanti integer not null,
@@ -177,6 +196,7 @@ create table Paese(
     IPRangeEnd varchar(10) not null
 );
 
+drop table if exists Produzione;
 create table Produzione(
 	IDFilm integer not null,
     Paese varchar(20) not null,
@@ -186,6 +206,7 @@ create table Produzione(
     foreign key(Paese) references Paese(Nome)
 );
 
+drop table if exists Restrizione;
 create table Restrizione(
 	ID integer not null auto_increment,
     FormatoVideo varchar(5) not null,
@@ -194,6 +215,7 @@ create table Restrizione(
     primary key(ID)
 );
 
+drop table if exists PaeseRestrizione;
 create table PaeseRestrizione(
 	IDRestrizione integer not null,
     Paese varchar(20) not null,
@@ -203,6 +225,7 @@ create table PaeseRestrizione(
     foreign key(Paese) references Paese(Nome)
 );
 -- latitudine e longitudine memorizzati in radianti
+drop table if exists Server;
 create table Server(
 	IndirizzoIP varchar(15) not null primary key,
     Latitudine float not null,
@@ -216,6 +239,7 @@ create table Server(
     foreign key(Paese) references Paese(Nome)
 );
 
+drop table if exists PoP;
 create table PoP(
 	IDFile integer not null,
     IPServer varchar(15) not null,
@@ -225,8 +249,9 @@ create table PoP(
     foreign key(IPServer) references Server(IndirizzoIP)
 );
 
+drop table if exists Visualizzazione;
 create table Visualizzazione(
-	IDFile integer not null,
+    IDFile integer not null,
     Dispositivo varchar(17) not null,
     MinutoCorrente time not null,
     
@@ -235,9 +260,10 @@ create table Visualizzazione(
     foreign key(Dispositivo) references Dispositivo(IndirizzoMAC)
 );
 
+drop table if exists File;
 create table File(
 	ID integer not null auto_increment primary key,
-    Risoluzione varchar(10) not null,
+    Risoluzione integer not null,
     BitRate integer not null,
     QualitaAudio varchar(15) not null,
     QualitaVideo varchar(15) not null,
@@ -253,6 +279,7 @@ create table File(
     foreign key(Film) references Film(ID)
 );
 
+drop table if exists FormatoAudio;
 create table FormatoAudio(
 	ID integer not null auto_increment primary key,
     MaxBitrate integer not null,
@@ -261,6 +288,7 @@ create table FormatoAudio(
     DataRilascio date not null
 );
 
+drop table if exists FormatoVideo;
 create table FormatoVideo(
 	ID integer not null auto_increment primary key,
     Nome varchar(10) not null,
@@ -269,10 +297,12 @@ create table FormatoVideo(
     DataRilascio date not null
 );
 
+drop table if exists Lingua;
 create table Lingua(
 	NomeLingua varchar(20) not null primary key
 );
 
+drop table if exists Audio;
 create table Audio(
 	IDFile integer not null,
     Lingua varchar(20) not null,
@@ -282,6 +312,7 @@ create table Audio(
     foreign key(Lingua) references Lingua(NomeLingua)
 );
 
+drop table if exists Sottotitolo;
 create table Sottotitolo(
 	IDFile integer not null,
     Lingua varchar(20) not null,
