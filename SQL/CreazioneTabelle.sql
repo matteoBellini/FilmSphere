@@ -254,6 +254,7 @@ create table Visualizzazione(
     IDFile integer not null,
     Dispositivo varchar(17) not null,
     MinutoCorrente time not null,
+    InizioVisualizzazione datetime
     
     primary key(IDFile, Dispositivo),
     foreign key(IDFile) references File(ID),
