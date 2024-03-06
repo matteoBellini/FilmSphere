@@ -144,13 +144,12 @@ DELIMITER $$
 CREATE TRIGGER TDispositivo BEFORE INSERT ON Dispositivo
 FOR EACH ROW
 BEGIN
-    IF NEW.Risoluzione NOT IN ("720p", "1080p", "1440p", "2160p") THEN
+    IF NEW.Risoluzione NOT IN ("720", "1080", "1440", "2160") THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = "Inserimento di una risoluzione non valida";
     END IF;
 END $$
 DELIMITER ;
-
 
 -- Controllo che la data di rilascio di un Formato Audio sia corretta
 DROP TRIGGER IF EXISTS TFormatoAudio;
@@ -176,5 +175,69 @@ BEGIN
         SIGNAL SQL STATE '45000'
         SET MESSAGE_TEXT = "Inseriemento di una Data di Rilascio non valida";
     END IF;
+END $$
+DELIMITER ;
+
+-- Aggiunta del carico di un server nel momento in cui inizia una visualizzazione
+DROP TRIGGER IF EXISTS AddCarico
+DELIMITER $$
+CREATE TRIGGER AddCarico AFTER INSERT OR UPDATE ON Visualizzazione
+FOR EACH ROW
+BEGIN
+    DECLARE carico FLOAT DEFAULT 0;
+    DECLARE risoluzione INTEGER DEFAULT 0;
+    DECLARE bitrate INTEGER DEFAULT 0;
+    DECLARE _server VARCHAR(15) DEFAULT '';
+
+    SET risoluzione = (SELECT Risoluzione
+                       FROM File
+                       WHERE ID = NEW.IDFile);
+
+    SET bitrate = (SELECT Bitrate
+                       FROM File
+                       WHERE ID = NEW.IDFile);
+    SET _server = (SELECT ServerConnesso
+                  FROM Dispositivo
+                  WHERE IndirizzoMac = NEW.Dispositivo);
+
+    SET carico = (risoluzione / 5 + bitrate / 100) / 100;
+
+    UPDATE Server
+    SET CaricoAttuale = CaricoAttuale + carico;
+    WHERE IndirizzoIP = _server;
+END $$
+DELIMITER ;
+
+-- Rimozione del carico da un server nel momento in cui una connessione termina
+DROP TRIGGER IF EXISTS SubCarico;
+DELIMITER $$
+CREATE TRIGGER SubCarico AFTER UPDATE ON Dispositivo
+BEGIN
+    DECLARE _file INTEGER DEFAULT 0;
+    DECLARE risoluzione INTEGER DEFAULT 0;
+    DECLARE bitrate INTEGER DEFAULT 0;
+    DECLARE carico FLOAT DEFAULT 0;
+
+    IF NEW.FineConnessione IS NOT NULL THEN
+        SET _file = (SELECT IDFile
+                     FROM Visualizzazione
+                     WHERE Dispositivo = NEW.IndirizzoMAC
+                     ORDER BY InizioConnessione DESC
+                     LIMIT 1);
+        SET risoluzione = (SELECT Risoluzione
+                           FROM File
+                           WHERE ID = _file);
+
+        SET bitrate = (SELECT Bitrate
+                       FROM File
+                       WHERE ID = _file);
+
+        SET carico = (risoluzione / 5 + bitrate / 100) / 100;
+
+        UPDATE Server
+        SET CaricoAttuale = CaricoAttuale - carico;
+        WHERE IndirizzoIP = NEW.Server;
+    END IF;
+
 END $$
 DELIMITER ;
