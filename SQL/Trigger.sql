@@ -188,23 +188,33 @@ BEGIN
     DECLARE risoluzione INTEGER DEFAULT 0;
     DECLARE bitrate INTEGER DEFAULT 0;
     DECLARE _server VARCHAR(15) DEFAULT '';
+    DECLARE _caricoServer INTEGER DEFAULT 0;
 
     SET risoluzione = (SELECT Risoluzione
                        FROM File
                        WHERE ID = NEW.IDFile);
 
     SET bitrate = (SELECT Bitrate
-                       FROM File
-                       WHERE ID = NEW.IDFile);
+                   FROM File
+                   WHERE ID = NEW.IDFile);
+
     SET _server = (SELECT ServerConnesso
-                  FROM Dispositivo
-                  WHERE IndirizzoMac = NEW.Dispositivo);
+                   FROM Dispositivo
+                   WHERE IndirizzoMac = NEW.Dispositivo);
 
-    SET carico = (risoluzione / 5 + bitrate / 100) / 100;
+    SET _caricoServer = (SELECT CaricoAttuale
+                         FROM Server
+                         WHERE IndirizzoIP = NEW.IndirizzoIP);
 
-    UPDATE Server
-    SET CaricoAttuale = CaricoAttuale + carico;
-    WHERE IndirizzoIP = _server;
+    SET carico = (risoluzione / 20 + bitrate / 100) / 600;
+
+    IF _caricoServer + carico > 90 THEN
+        CALL Find_Edge_Server(_server, NEW.IDFile);
+    ELSE
+        UPDATE Server
+        SET CaricoAttuale = CaricoAttuale + carico;
+        WHERE IndirizzoIP = _server;
+    END IF;
 END $$
 DELIMITER ;
 
@@ -232,12 +242,11 @@ BEGIN
                        FROM File
                        WHERE ID = _file);
 
-        SET carico = (risoluzione / 5 + bitrate / 100) / 100;
+        SET carico = (risoluzione / 20 + bitrate / 100) / 600;
 
         UPDATE Server
         SET CaricoAttuale = CaricoAttuale - carico;
         WHERE IndirizzoIP = NEW.Server;
     END IF;
-
 END $$
 DELIMITER ;

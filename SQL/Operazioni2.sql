@@ -154,7 +154,7 @@ BEGIN
 			(SIN(Latitudine) * SIN(fetchLat))
 		) * 6371;
         
-        IF fetchCarico < 85 THEN	
+        IF fetchCarico < 90 THEN	
         	IF distanza < distanzaMin THEN
         		SET distanzaMin = distanza;
             	SET resultServer = fetchServer;
@@ -165,7 +165,7 @@ BEGIN
     SET _check = TRUE;
     
     IF distanzaMin > 1500 THEN
-    	-- Si richiama la procedure che aggiunge nella cache dei server (il più vicino all'utente e non sovaraccarico) i vari film.
+    	CALL CaricaFile(_ServerScelto, _File);
     END IF;
 END $$
 DELIMITER ;
@@ -202,7 +202,7 @@ BEGIN
 		CALL ADD_EDGE_SERVER(IpServer, Latitudine, Longitudine);
     END WHILE;
     
-    SET _check = TRUE
+    SET _check = TRUE;
     
     CLOSE cur;
 	
@@ -236,10 +236,64 @@ BEGIN
             
         IF distanza < 1000 THEN
         	INSERT INTO EDGE_SERVER VALUES (IpServer, fetchServer, distanza);
-        END IF;     
+        END IF;
     END WHILE;
+
+    CLOSE cur;
 END $$
 DELIMITER ;
+
+-- Ipotizziamo che i server vengano posti ad una distanza adeguata da permette ad ogni server di avere almeno 1 edge server.
+DROP PROCEDURE IF EXISTS Find_Edge_Server;
+DELIMITER $$
+CREATE PROCEDURE IF NOT EXISTS Find_Edge_Server(IN _Server VARCHAR(15), IN _File INTEGER, OUT _ServerScelto VARCHAR(15), OUT _check BOOL)
+BEGIN
+    DECLARE finito INTEGER DEFAULT 0;
+    DECLARE fetchServer VARCHAR(15) DEFAULT '';
+    DECLARE fetchDistanza INTEGER DEFAULT 0;
+
+    DECLARE cur CURSOR FOR
+        SELECT ED.IDEdgeServer, ED.Distanza
+        FROM EDGE_SERVER ED
+            INNER JOIN Server S
+            ON S.IndirizzoIP = ED.IDEdgeServer
+        WHERE IDServer = _Server AND S.CaricoAttuale < 90;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+
+    OPEN cur;
+    
+    WHILE finito = 0 DO
+        FETCH cur INTO (fetchServer, fetchDistanza);
+        SET _ServerScelto = (SELECT IndirizzoIP
+                             FROM Server S
+                                INNER JOIN PoP P
+                                ON S.IndirizzoIP = P.IndirizzoIPServer
+                             WHERE IDFile = _File);
+        IF _ServerScelto IS NOT NULL THEN 
+            SET finito = 1;
+        END IF;
+    END WHILE;
+
+    IF _ServerScelto IS NULL THEN 
+        SET _ServerScelto = fetchServer;
+        CALL CaricaFile(_ServerScelto, _File);
+    CLOSE cur;
+
+    SET _check = TRUE;
+END $$
+DELIMITER ;
+
+-- Aggiunta di un file all'interno di un Server (Si aggiunge il file alla relazione POP)
+DROP PROCEDURE IF EXISTS CaricaFile;
+DELIMITER $$
+CREATE PROCEDURE CaricaFile (IN _Server VARCHAR(15), IN _file INTEGER, OUT _check BOOL)
+BEGIN
+    INSERT INTO PoP VALUES (_file, _Server);
+    SET _check = TRUE;
+END $$
+DELIMITER ;
+
 
 
 
