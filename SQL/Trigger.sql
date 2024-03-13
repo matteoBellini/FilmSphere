@@ -164,6 +164,23 @@ BEGIN
 END $$
 DELIMITER ;
 
+-- Verifica che in Restrizione ci siano solo Formati esistenti nel DB
+DROP TRIGGER IF EXISTS RestrizioneAudio;
+DELIMITER $$
+CREATE TRIGGER RestrizioneAudio BEFORE INSERT OR UPDATE ON Restrizione
+FOR EACH ROW
+BEGIN
+    DECLARE _corretto INTEGER DEFAULT 0;
+    SET _corretto = (SELECT ID
+                     FROM FormatoAudio
+                     WHERE ID = NEW.FormatoAudio);
+    
+    IF _corretto IS NULL THEN
+        SIGNAL SQL STATE '45000'
+        SET MESSAGE_TEXT = "Il formato audio inserito non è valido";
+    END IF;
+END $$
+DELIMITER ;
 
 -- Controllo che la data di rilascio di un Formato Video sia corretta
 DROP TRIGGER IF EXISTS TFormatoVideo;
@@ -175,6 +192,25 @@ BEGIN
         SIGNAL SQL STATE '45000'
         SET MESSAGE_TEXT = "Inseriemento di una Data di Rilascio non valida";
     END IF;
+END $$
+DELIMITER ;
+
+-- Verifica che in Restrizione ci siano solo Formati esistenti nel DB
+DROP TRIGGER IF EXISTS RestrizioneVideo;
+DELIMITER $$
+CREATE TRIGGER RestrizioneVideo BEFORE INSERT OR UPDATE ON Restrizione
+FOR EACH ROW
+BEGIN
+    DECLARE _corretto INTEGER DEFAULT 0;
+    SET _corretto = (SELECT ID
+                     FROM FormatoVideo
+                     WHERE ID = NEW.FormatoVideo);
+    
+    IF _corretto IS NULL THEN
+        SIGNAL SQL STATE '45000'
+        SET MESSAGE_TEXT = "Il formato video inserito non è valido";
+    END IF;
+
 END $$
 DELIMITER ;
 

@@ -100,7 +100,7 @@ create table Abbonamento(
     Durata integer unsigned not null,
     NoData bit(1) not null,
     NumeroDispositivi integer unsigned not null,
-    RisoluzioneMassima varchar(10) not null,
+    RisoluzioneMassima integer not null,
     Prezzo double unsigned not null
 );
 
@@ -209,8 +209,8 @@ create table Produzione(
 drop table if exists Restrizione;
 create table Restrizione(
 	ID integer not null auto_increment,
-    FormatoVideo varchar(5) not null,
-    FormatoAudio varchar(5) not null,
+    FormatoVideo integer default null,
+    FormatoAudio integer default null,
 
     primary key(ID)
 );

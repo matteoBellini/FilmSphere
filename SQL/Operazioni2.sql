@@ -294,6 +294,52 @@ BEGIN
 END $$
 DELIMITER ;
 
+-- Individuazione dei film che un utente può vedere in un certo paese (non sottoposti a restrizioni)
+DROP PROCEDURE IF EXISTS VerificaRestrizioni;
+DELIMITER $$
+CREATE PROCEDURE VerificaRestrizioni(IN _IndirizzoMAC VARCHAR(17), IN _Utente VARCHAR(16), IN _Paese VARCHAR(20), IN _Film INTEGER, OUT _IDFile INTEGER)
+BEGIN
+    DECLARE finito INTEGER DEFAULT 0;
+    DECLARE _RisoluzioneMassima INTEGER DEFAULT 0;
+    DECLARE fetchID INTEGER DEFAULT 0;
+    DECLARE fetchRisoluzione INTEGER DEFAULT 0;
+    DECLARE fetchAudio VARCHAR(5) DEFAULT '';
+    DECLARE fetchVideo VARCHAR(5) DEFAULT '';
+    
+    DECLARE cur CURSOR FOR
+        WITH RestrPaese AS
+        (SELECT R.FormatoVideo, R.FormatoAudio
+        FROM PaeseRestrizione PR
+            INNER JOIN Restrizione R
+            ON PR.IDRestrizione = R.ID
+        WHERE PR.Paese = _Paese)
+        SELECT F.ID, F.Risoluzione, R.FormatoVideo, R.FormatoAudio
+        FROM File F
+            LEFT OUTER JOIN RestrPaese R
+            ON F.FormatoAudio = R.FormatoAudio OR F.FormatoVideo = R.FormatoVideo
+        WHERE F.Film = _Film
+        ORDER BY F.Risoluzione DESC;
 
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+    
+    SET _RisoluzioneMassima = (SELECT A.RisoluzioneMassima
+                               FROM Utente U
+                                    INNER JOIN Abbonamento A 
+                                    ON U.TipoAbbonamento = A.Tipo
+                               WHERE U.CF = _Utente);
+    
+    OPEN cur;
+    
+    WHILE finito = 0 DO
+        FETCH cur INTO (fetchID, fetchRisoluzione, fetchAudio, fetchVideo);
+        IF fetchRisoluzione <= _RisoluzioneMassima THEN
+            IF fetchAudio IS NULL AND fetchVideo IS NULL THEN
+                SET _IDFile = fetchID;
+                SET finito = 1;
+            END IF;
+        END IF;
+    END WHILE;
 
-
+    CLOSE cur;
+END $$
+DELIMITER ;
