@@ -91,6 +91,7 @@ create table Utente(
     Telefono varchar(10) not null,
     RinnovoAutomatico bit(1) not null,
     TipoAbbonamento varchar(10),
+    DataScadenza date default null,
     foreign key(TipoAbbonamento) references Abbonamento(Tipo)
 );
 

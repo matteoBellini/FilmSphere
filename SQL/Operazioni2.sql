@@ -45,7 +45,7 @@ BEGIN
     SET temp1 = (SELECT COUNT(*)
                  FROM Utente
                  WHERE Mail = _Mail);
-		SET temp2 = (SELECT COUNT(*)
+	SET temp2 = (SELECT COUNT(*)
                  FROM Utente
                  WHERE Telefono = _telefono);
     SET temp3 = (SELECT COUNT(*)
@@ -94,6 +94,7 @@ BEGIN
     DECLARE temp2 INTEGER DEFAULT 0;
     DECLARE temp3 VARCHAR(10) DEFAULT NULL;
     DECLARE temp4 INTEGER DEFAULT 0;
+    DECLARE durataAbbonamento INTEGER DEFAULT 0;
     
     SET temp1 = (SELECT COUNT(*)
                  FROM Abbonamento
@@ -111,9 +112,14 @@ BEGIN
     IF temp1 = 0 OR temp2 = 0 OR temp3 IS NULL OR temp4 = 0 THEN
     	SET _check = FALSE;
 	ELSE
+        SET durataAbbonamento = (SELECT Durata
+                                 FROM Abbonamento
+                                 WHERE Tipo = _abb)
+
     	UPDATE Utente U
-        SET U.TipoAbbonamento = _abb
+        SET U.TipoAbbonamento = _abb , U.DataScadenza = CURRENT_DATE + INTERVAL durataAbbonamento DAY
     	WHERE U.CF = _CF;
+
         SET _check = TRUE;
         CALL emissione_fattura(_CF, _abb, _numCarta);
     END IF;
@@ -343,3 +349,57 @@ BEGIN
     CLOSE cur;
 END $$
 DELIMITER ;
+
+-- Inserimento di nuovi dispositivi associati ad un utente, in linea con le specifiche del proprio abbonamento
+DROP TRIGGER IF EXISTS InserimentoDispositivo;
+DELIMITER $$
+CREATE TRIGGER InserimentoDispositivo BEFORE INSERT ON Dispositivo
+FOR EACH ROW
+BEGIN
+
+    DECLARE maxDispositiviON INTEGER DEFAULT 0;
+    DECLARE numDispositiviON INTEGER DEFAULT 0;
+
+    SET maxDispositiviON = (SELECT NumeroDispositivi
+                            FROM Utente U
+                                INNER JOIN Abbonamento A
+                                ON A.Tipo = U.TipoAbbonamento
+                            WHERE U.CF = NEW.Utente);
+
+    SET numDispositiviON = (SELECT COUNT(*)
+                            FROM Dispositivo D
+                            WHERE D.Utente = NEW.Utente AND D.FineConnessione IS NULL);
+
+    IF numDispositiviON = maxDispositiviON THEN
+        SIGNAL SQL STATE '45000'
+        SET MESSAGE_TEXT = "Hai raggiunto il numero massimo di dispositivi connessi contemporaneamente.";
+    END IF;
+
+END $$
+DELIMITER ;
+
+-- Invio di una notifica il giorno precedente della scadenza dell'abbonamento
+CREATE TABLE UtentiInScadenza(
+    Utente VARCHAR(16) NOT NULL PRIMARY KEY
+)ENGINE = InnoDB;
+
+DROP PROCEDURE IF EXISTS build_utenti_scadenza;
+DELIMITER $$
+CREATE PROCEDURE build_utenti_scadenza()
+BEGIN
+    TRUNCATE UtentiInScadenza;
+
+    INSERT INTO UtentiInScadenza
+    SELECT CF
+    FROM Utente 
+    WHERE DATEDIFF(CURRENT_DATE, DataScadenza) = 1 AND RinnovoAutomatico = 0;
+    
+END $$
+DELIMITER ;
+
+DROP EVENT IF EXISTS invioNotificaScadenza;
+CREATE EVENT invioNotificaScadenza ON SCHEDULE EVERY 1 DAY
+DO 
+    CALL build_utenti_scadenza();
+
+
