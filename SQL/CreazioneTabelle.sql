@@ -172,7 +172,7 @@ create table Fattura(
 -- latitudine e longitudine aggiunte in radianti
 drop table if exists Dispositivo;
 create table Dispositivo(
-	IndirizzoMAC varchar(17) not null primary key,
+	IndirizzoMac varchar(17) not null primary key,
     Hardware varchar(20) not null,
     Risoluzione varchar(10) not null,
     IndirizzoIP varchar(15) not null,
@@ -259,7 +259,7 @@ create table Visualizzazione(
     
     primary key(IDFile, Dispositivo),
     foreign key(IDFile) references File(ID),
-    foreign key(Dispositivo) references Dispositivo(IndirizzoMAC)
+    foreign key(Dispositivo) references Dispositivo(IndirizzoMac)
 );
 
 drop table if exists File;

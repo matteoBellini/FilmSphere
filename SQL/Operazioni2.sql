@@ -169,6 +169,7 @@ BEGIN
     END WHILE;
     
     SET _check = TRUE;
+    CLOSE cur;
     
     IF distanzaMin > 1500 THEN
     	CALL CaricaFile(_ServerScelto, _File);
@@ -401,5 +402,3 @@ DROP EVENT IF EXISTS invioNotificaScadenza;
 CREATE EVENT invioNotificaScadenza ON SCHEDULE EVERY 1 DAY
 DO 
     CALL build_utenti_scadenza();
-
-

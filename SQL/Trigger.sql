@@ -267,7 +267,7 @@ BEGIN
     IF NEW.FineConnessione IS NOT NULL THEN
         SET _file = (SELECT IDFile
                      FROM Visualizzazione
-                     WHERE Dispositivo = NEW.IndirizzoMAC
+                     WHERE Dispositivo = NEW.IndirizzoMac
                      ORDER BY InizioConnessione DESC
                      LIMIT 1);
         SET risoluzione = (SELECT Risoluzione
