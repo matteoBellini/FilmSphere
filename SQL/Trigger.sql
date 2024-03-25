@@ -258,6 +258,7 @@ DELIMITER ;
 DROP TRIGGER IF EXISTS SubCarico;
 DELIMITER $$
 CREATE TRIGGER SubCarico AFTER UPDATE ON Dispositivo
+FOR EACH ROW
 BEGIN
     DECLARE _file INTEGER DEFAULT 0;
     DECLARE risoluzione INTEGER DEFAULT 0;
@@ -283,6 +284,37 @@ BEGIN
         UPDATE Server
         SET CaricoAttuale = CaricoAttuale - carico;
         WHERE IndirizzoIP = NEW.Server;
+    END IF;
+END $$
+DELIMITER ;
+
+-- Verifica che ci sia spazio a sufficienza per l'inserimento di un film nella cache di un server
+DROP TRIGGER IF EXISTS VerificaSpazio;
+DELIMITER $$
+CREATE TRIGGER VerificaSpazio BEFORE INSERT ON PoP
+FOR EACH ROW
+BEGIN
+    DECLARE _DimensioneFile INTEGER DEFAULT 0;
+    DECLARE _DimensioneCache INTEGER DEFAULT 0;
+    DECLARE _spazioUtilizzato INTEGER DEFAULT 0;
+
+    SET _DimensioneFile = (SELECT DimensioneFile
+                          FROM File
+                          WHERE ID = NEW.IDFile);
+
+    SET _DimensioneCache = (SELECT DimensioneCache
+                            FROM Server
+                            WHERE IndirizzoIP = NEW.IPServer);
+
+    SET _spazioUtilizzato = (SELECT SUM(DimensioneFile)
+                             FROM PoP P
+                                INNER JOIN File F
+                                ON F.ID = P.IDFile
+                             WHERE P.IPServer = NEW.IPServer);
+
+    IF _spazioUtilizzato + _DimensioneFile > _DimensioneCache THEN
+        SIGNAL SQL STATE '45000'
+        SET MESSAGE_TEXT = "La Cache del server è piena";
     END IF;
 END $$
 DELIMITER ;

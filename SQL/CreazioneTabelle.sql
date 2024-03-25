@@ -1,3 +1,6 @@
+DROP SCHEMA IF EXISTS FilmSphere;
+CREATE SCHEMA IF NOT EXISTS FilmSphere DEFAULT CHARACTER SET utf8;
+
 drop table if exists Film;
 create table Film(
 	ID integer not null primary key auto_increment,
@@ -12,12 +15,12 @@ create table Film(
     PremiFilm integer default 0,
     PremiCineasta integer default 0,
     foreign key(Genere) references Genere(Nome)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Genere;
 create table Genere(
 	Nome varchar(25) primary key not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Cineasta;
 create table Cineasta(
@@ -26,7 +29,7 @@ create table Cineasta(
     Cognome varchar(20) not null,
     DataNascita date not null,
     LuogoNascita varchar(30) not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Recitazione;
 create table Recitazione(
@@ -35,7 +38,7 @@ create table Recitazione(
     NomePersonaggio varchar(30) not null,
     foreign key(IdCineasta) references Cineasta(IdCineasta),
     foreign key(Film) references Film(ID)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Regia;
 create table Regia(
@@ -43,7 +46,7 @@ create table Regia(
     Film integer,
     foreign key(IdCineasta) references Cineasta(IdCineasta),
     foreign key(Film) references Film(ID)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists PremiCineasta;
 create table PremiCineasta(
@@ -51,7 +54,7 @@ create table PremiCineasta(
     Nome varchar(50)not null,
     Importanza integer unsigned not null,
     Categoria varchar(50) not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists PremiFilm;
 create table PremiFilm(
@@ -59,7 +62,7 @@ create table PremiFilm(
     Nome varchar(50)not null,
     Importanza integer unsigned not null,
     Categoria varchar(50) not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Premiazione;
 create table Premiazione(
@@ -68,7 +71,7 @@ create table Premiazione(
     DataPremiazione date not null,
     foreign key(IdCineasta) references Cineasta(IdCineasta),
     foreign key(IdPremio) references PremiCineasta(Id)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Vincita;
 create table Vincita(
@@ -77,7 +80,7 @@ create table Vincita(
     DataVincita date not null,
     foreign key(IdFilm) references Film(ID),
     foreign key(IdPremio) references PremiFilm(Id)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Utente;
 create table Utente(
@@ -93,7 +96,7 @@ create table Utente(
     TipoAbbonamento varchar(10),
     DataScadenza date default null,
     foreign key(TipoAbbonamento) references Abbonamento(Tipo)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Abbonamento;
 create table Abbonamento(
@@ -103,7 +106,7 @@ create table Abbonamento(
     NumeroDispositivi integer unsigned not null,
     RisoluzioneMassima integer not null,
     Prezzo double unsigned not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Critico;
 create table Critico(
@@ -113,7 +116,7 @@ create table Critico(
     DataNascita date not null,
     Sesso varchar(1) not null,
     Azienda varchar(20) not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Recensione;
 create table Recensione(
@@ -125,7 +128,7 @@ create table Recensione(
     primary key(CFUtente, IDFilm),
     foreign key(CFUtente) references Utente(CF),
     foreign key(IDFilm) references Film(ID)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Critica;
 create table Critica(
@@ -137,7 +140,7 @@ create table Critica(
     primary key(CFUtente, IDFilm),
     foreign key(CFUtente) references Utente(CF),
     foreign key(IDFilm) references Film(ID)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Carta;
 create table Carta(
@@ -146,7 +149,7 @@ create table Carta(
     NomeTitolare varchar(20) not null,
     DataScadenza date not null,
     CVV varchar(3) not null,
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Preferenza;
 create table Preferenza(
@@ -156,7 +159,7 @@ create table Preferenza(
     primary key(NumCarta, CF),
     foreign key (NmCarta) REFERENCES Carta(Numero),
     foreign key (CF) REFERENCES Utente(CF)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Fattura;
 create table Fattura(
@@ -168,7 +171,7 @@ create table Fattura(
     
     foreign key(NumeroCarta) references Carta(Numero),
     foreign key(Utente) references Utente(CF)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 -- latitudine e longitudine aggiunte in radianti
 drop table if exists Dispositivo;
 create table Dispositivo(
@@ -187,7 +190,7 @@ create table Dispositivo(
     foreign key(Utente) references Utente(CF),
     foreign key(Paese) references Paese(Nome),
     foreign key(ServerConnesso) references Server(IndirizzoIP)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Paese;
 create table Paese(
@@ -195,7 +198,7 @@ create table Paese(
     NumeroAbitanti integer not null,
     IPRangeStart varchar(10) not null,
     IPRangeEnd varchar(10) not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Produzione;
 create table Produzione(
@@ -205,7 +208,7 @@ create table Produzione(
     primary key(IDFilm, Paese),
     foreign key(IDFilm) references Film(ID),
     foreign key(Paese) references Paese(Nome)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Restrizione;
 create table Restrizione(
@@ -214,7 +217,7 @@ create table Restrizione(
     FormatoAudio integer default null,
 
     primary key(ID)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists PaeseRestrizione;
 create table PaeseRestrizione(
@@ -224,7 +227,7 @@ create table PaeseRestrizione(
     primary key(IDRestrizione, Paese),
     foreign key(IDRestrizione) references Restrizione(ID),
     foreign key(Paese) references Paese(Nome)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 -- latitudine e longitudine memorizzati in radianti
 drop table if exists Server;
 create table Server(
@@ -238,7 +241,7 @@ create table Server(
     Paese varchar(20) not null,
     
     foreign key(Paese) references Paese(Nome)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists PoP;
 create table PoP(
@@ -248,7 +251,7 @@ create table PoP(
     primary key(IDFile, IPServer),
     foreign key(IDFile) references File(ID),
     foreign key(IPServer) references Server(IndirizzoIP)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Visualizzazione;
 create table Visualizzazione(
@@ -260,7 +263,7 @@ create table Visualizzazione(
     primary key(IDFile, Dispositivo),
     foreign key(IDFile) references File(ID),
     foreign key(Dispositivo) references Dispositivo(IndirizzoMac)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists File;
 create table File(
@@ -279,7 +282,7 @@ create table File(
     foreign key(FormatoVideo) references FormatoVideo(ID),
     foreign key(FormatoAudio) references FormatoAudio(ID),
     foreign key(Film) references Film(ID)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists FormatoAudio;
 create table FormatoAudio(
@@ -288,7 +291,7 @@ create table FormatoAudio(
     Codec varchar(10) not null,
     Nome varchar(10) not null,
     DataRilascio date not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists FormatoVideo;
 create table FormatoVideo(
@@ -297,7 +300,7 @@ create table FormatoVideo(
     Codec varchar(10) not null,
     FPS integer unsigned not null,
     DataRilascio date not null
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Lingua;
 create table Lingua(
@@ -312,7 +315,7 @@ create table Audio(
     primary key(IDFile, Lingua),
     foreign key(IDFile) references File(ID),
     foreign key(Lingua) references Lingua(NomeLingua)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists Sottotitolo;
 create table Sottotitolo(
@@ -322,4 +325,4 @@ create table Sottotitolo(
     primary key(IDFile, Lingua),
     foreign key(IDFile) references File(ID),
     foreign key(Lingua) references Lingua(NomeLingua)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;

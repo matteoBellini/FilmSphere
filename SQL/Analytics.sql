@@ -6,7 +6,7 @@ CREATE TABLE log_classifiche (
     DataVisualizzazione DATETIME NOT NULL,
 
     PRIMARY KEY(IDFile, Abbonamento, Paese, DataVisualizzazione)
-)Engine = InnoDB;
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS Classifica;
 CREATE TABLE Classifica (
@@ -18,7 +18,7 @@ CREATE TABLE Classifica (
     TotaleVisualizzazioni INTEGER NOT NULL,
 
     PRIMARY KEY(IDFile, Paese, Abbonamento)
-)Engine = InnoDB;
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 -- Trigger di push
 DROP TRIGGER IF EXISTS push_log_classifiche;

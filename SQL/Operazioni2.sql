@@ -1,36 +1,3 @@
-/*
-Film(ID, Titolo, Descrizione, Durata, AnnoDiProduzione, Genere*, Recensioni, NumRecensioni, Critica, PremiFilm, PremiCineasta)
-Genere(Nome)
-Cineasta(IDCineasta, Nome, Cognome, DataNascita, LuogoNascita,)
-Recitazione(IDCineasta*, Film*, NomePersonaggio)
-Regia(IDCineasta*, Film*)
-PremiCineasta(ID, Nome, Importanza, Categoria)
-PremiFilm(ID, Nome, Importanza, Categoria)
-Premiazione(IDCineasta*, IDPremio*, DataPremiazione)
-Vincita(IDFilm*, IDPremio*, DataVincita)
-Utente(CF, Nome, Cognome, DataNascita, Sesso, Mail, Password, Telefono, RinnovoAutomatico, TipoAbbonamento*)
-Critico(CF, Nome, Cognome, DataNascita, Sesso, Azienda)
-Recensione(CFUtente*, IDFilm*, Testo, Punteggio)
-Critica(CFCritico*, IDFilm*, Testo, Punteggio)
-Carta(Numero, CognomeTitolare, NomeTitolare, DataScadenza, CVV)
-Preferenza(NumCarta*, CF*)
-Fattura(Numero, DataEmissione, Importo, NumeroCarta*, Utente*)
-Abbonamento(Tipo, Durata, Offline, NumeroDispositivi, RisoluzioneMassima, Prezzo)
-Dispositivo(IndirizzoMac, Hardware, Risoluzione, IndirizzoIP, InizioConnessione, FineConnessione, Utente*, Paese*, Latitudine, Longitudine, ServerConnesso*)
-Paese(Nome, NumeroAbitanti, IPRangeStart, IPRangeEnd)
-Produzione(IDFilm*, Paese*)
-Restrizione(ID, FormatoVideo, FormatoAudio)
-PaeseResrizione(IDRestrizione*, Paese*)
-Server(IndirizzoIP, Latitudine, Longitudine, CAPBanda, CAPTrasmissione, DimensioneCache, CaricoAttuale, Paese*)
-P.o.P(IDFile*, IndirizzoIPServer*)
-Visualizzazione(IDFile*, Dispositivo*, MinutoCorrente)
-File(ID, Risoluzione, Bitrate, QualitàAudio, QualitàVideo, AspectRatio, DimensioneFile, LunghezzaVideo, FormatoVideo*, FormatoAudio*, Film*)
-FormatoAudio(ID, MaxBitrate, Codec, Nome, DataRilascio)
-FormatoVideo(ID, Nome, Codec, FPS, DataRilascio)
-Lingua(NomeLingua)
-Audio(IDFile*, Lingua*)
-Sottotitolo(IDFile*, Lingua*)*/
-
 -- --------------------------------------
 -- Inserimento di un nuovo utente
 -- --------------------------------------
@@ -193,7 +160,7 @@ CREATE TABLE EDGE_SERVER(
   	IDEdgeServer VARCHAR(15) NOT NULL,
   	Distanza INTEGER NOT NULL,
   	PRIMARY KEY (IDServer, IDEdgeServer)
-);
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 DROP PROCEDURE IF EXISTS BUILD_EDGE_SERVER$$
 CREATE PROCEDURE BUILD_EDGE_SERVER (OUT _check BOOL)
@@ -264,7 +231,7 @@ DELIMITER $$
 CREATE PROCEDURE IF NOT EXISTS Find_Edge_Server(IN _Server VARCHAR(15), IN _File INTEGER, OUT _ServerScelto VARCHAR(15), OUT _check BOOL)
 BEGIN
     DECLARE finito INTEGER DEFAULT 0;
-    DECLARE fetchServer VARCHAR(15) DEFAULT '';
+    DECLARE fetchServer VARCHAR(15) DEFAULT NULL;
     DECLARE fetchDistanza INTEGER DEFAULT 0;
 
     DECLARE cur CURSOR FOR
@@ -272,7 +239,8 @@ BEGIN
         FROM EDGE_SERVER ED
             INNER JOIN Server S
             ON S.IndirizzoIP = ED.IDEdgeServer
-        WHERE IDServer = _Server AND S.CaricoAttuale < 90;
+        WHERE IDServer = _Server AND S.CaricoAttuale < 90
+        ORDER BY ED.Distanza;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
 
@@ -280,22 +248,72 @@ BEGIN
     
     WHILE finito = 0 DO
         FETCH cur INTO (fetchServer, fetchDistanza);
-        SET _ServerScelto = (SELECT IndirizzoIP
+        SET _ServerScelto = (SELECT S.IndirizzoIP
                              FROM Server S
                                 INNER JOIN PoP P
                                 ON S.IndirizzoIP = P.IndirizzoIPServer
-                             WHERE IDFile = _File);
+                             WHERE P.IDFile = _File AND S.IndirizzoIP = fetchServer);
         IF _ServerScelto IS NOT NULL THEN 
             SET finito = 1;
         END IF;
     END WHILE;
 
-    IF _ServerScelto IS NULL THEN 
-        SET _ServerScelto = fetchServer;
+    IF _ServerScelto IS NULL THEN
+        CALL Find_Edge_Server_Free_Cache(_Server, _File, _ServerScelto);
         CALL CaricaFile(_ServerScelto, _File);
     CLOSE cur;
 
     SET _check = TRUE;
+END $$
+DELIMITER ;
+
+-- Trova un Edge Server con spazio a sufficenza in cache per memorizzare il film in ingresso
+DROP PROCEDURE IF EXISTS Find_Edge_Server_Free_Cache;
+DELIMITER $$
+CREATE PROCEDURE Find_Edge_Server_Free_Cache(IN _Server VARCHAR(15), IN _File INTEGER, OUT _resultServer VARCHAR(15))
+BEGIN
+    DECLARE finito INTEGER DEFUALT 0;
+    DECLARE fetchServer VARCHAR(15) DEFAULT '';
+    DECLARE fetchDistanza INTEGER DEFAULT 0;
+    DECLARE spazioOccupato INTEGER DEFAULT 0;
+    DECLARE _dimensioneCache INTEGER DEFAULT 0;
+    DECLARE dimensioneFilm INTEGER DEFAULT 0;
+    
+    DECLARE cur CURSOR FOR
+        SELECT ED.IDEdgeServer, ED.Distanza
+        FROM EDGE_SERVER ED
+            INNER JOIN Server S
+            ON S.IndirizzoIP = ED.IDEdgeServer
+        WHERE IDServer = _Server AND S.CaricoAttuale < 90
+        ORDER BY ED.Distanza;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+
+    SET dimensioneFilm = (SELECT DimensioneFile
+                          FROM File
+                          WHERE ID = _File);
+
+    OPEN cur;
+
+    WHILE finito = 0 DO
+        FETCH cur INTO (fetchServer, fetchDistanza);
+        SET _dimensioneCache = (SELECT DimensioneCache
+                                FROM Server
+                                WHERE IndirizzoIP = fetchServer);
+
+        SET spazioOccupato = (SELECT SUM(DimensioneFile)
+                              FROM PoP P
+                                  INNER JOIN File F
+                                  ON F.ID = P.IDFile
+                              WHERE P.IPServer = fetchServer);
+        
+        IF spazioOccupato + dimensioneFilm <= DimensioneCache THEN
+            SET _resultServer = fetchServer;
+            SET finito = 1;
+        END IF;
+    END WHILE;
+    
+    CLOSE cur;
 END $$
 DELIMITER ;
 
@@ -396,7 +414,7 @@ DELIMITER ;
 -- --------------------------------------
 CREATE TABLE UtentiInScadenza(
     Utente VARCHAR(16) NOT NULL PRIMARY KEY
-)ENGINE = InnoDB;
+)ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 DROP PROCEDURE IF EXISTS build_utenti_scadenza;
 DELIMITER $$
@@ -468,7 +486,7 @@ BEGIN
     DECLARE punteggioPremi INTEGER DEFAULT 0;
     DECLARE numeroPremi INTEGER DEFAULT 0;
 
-    SELECT SUM(Importanza) as s, COUNT(*) as numPremi INTO punteggioPremi, numeroPremi
+    SELECT SUM(P.Importanza) as s, COUNT(*) as numPremi INTO punteggioPremi, numeroPremi
     FROM Vincita V
         INNER JOIN PremiFilm P
         ON V.IDPremio = P.ID
@@ -481,27 +499,52 @@ END $$
 DELIMITER ;
 
 -- Trigger relativo ai premi di un cineasta
--- DA FINIRE 
 DROP TRIGGER IF EXISTS rating_premi_cineasta;
 DELIMITER $$
 CREATE TRIGGER rating_premi_cineasta AFTER INSERT ON Premiazione
 FOR EACH ROW
 BEGIN
-    DECLARE finito1 INTEGER DEFAULT 0;
-    DECLARE finito2 INTEGER DEFAULT 0;
+    DECLARE finito INTEGER DEFAULT 0;
+    DECLARE fetchFilm INTEGER DEFAULT 0;
+    DECLARE ratingRecitazione INTEGER DEFAULT 0;
+    DECLARE numeroPremiRecitazione INTEGER DEFAULT 0;
+    DECLARE ratingRegia INTEGER DEFAULT 0;
+    DECLARE numeroPremiRegia INTEGER DEFAULT 0;
 
     DECLARE cur1 CURSOR FOR
         SELECT Film
         FROM Recitazione
         WHERE IdCineasta = NEW.IdCineasta;
 
-    DECLARE cur2 CURSOR FOR
-        SELECT Film
-        FROM Regia
-        WHERE IdCineasta = NEW.IdCineasta;
+    DECLARE HANDLER FOR NOT FOUND SET finito = 1;
 
-    DECLARE HANDLER FOR NOT FOUND SET finito1 = 1;
-    DECLARE HANDLER FOR NOT FOUND SET finito2 = 1;
+    OPEN cur1;
+
+    WHILE finito = 0 DO
+        FETCH cur INTO (fetchFilm);
+
+        SELECT SUM(PC.Importanza) AS SommaImportanzaPremi, COUNT(*) AS nPremi INTO ratingRecitazione, numeroPremiRecitazione
+        FROM Recitazione R
+            INNER JOIN Premiazione P
+            ON R.IdCineasta = P.IdCineasta
+            INNER JOIN PremiCineasta PC
+            ON P.IdPremio = PC.ID
+        WHERE R.Film = fetchFilm;
+
+        SELECT SUM() AS SommaImportanzaPremi2, COUNT(*) AS nPremi2 INTO ratingRegia, numeroPremiRegia
+        FROM Regia R
+            INNER JOIN Premiazione P
+            ON R.IdCineasta = P.IdCineasta
+            INNER JOIN PremiCineasta PC
+            ON P.IdPremio = PC.ID
+        WHERE R.Film = fetchFilm;
+
+        UPDATE Film
+        SET PremiCineasta = (ratingRecitazione + ratingRegia) / (numeroPremiRecitazione + numeroPremiRegia)
+        WHERE ID = fetchFilm;
+    END WHILE;
+
+    CLOSE cur1;
 END $$
 DELIMITER ;
 
@@ -519,6 +562,56 @@ BEGIN
     FROM Film
     WHERE ID = _film;
 
-    SET _rating = (0.2 * ratingRecensioni) + (0.4 * ratingCritica) + (0.4 * ((0.6 * ratingPremiFilm)+(0.4 * ratingPremiCineasta));
+    SET _rating = (0.2 * ratingRecensioni) + (0.4 * ratingCritica) + (0.4 * ((0.6 * ratingPremiFilm) + (0.4 * ratingPremiCineasta)));
+END $$
+DELIMITER ;
+
+-- --------------------------------------
+-- Caching
+-- --------------------------------------
+DROP PROCEDURE IF EXISTS Caching;
+DELIMITER $$
+CREATE PROCEDURE Caching (IN _Dispositivo VARCHAR(17))
+BEGIN
+    DECLARE _Paese VARCHAR(20) DEFAULT '';
+    DECLARE _Abbonamento VARCHAR(10) DEFAULT '';
+    DECLARE GenerePreferito VARCHAR(25) DEFAULT '';
+
+    SET GenerePreferito = (WITH NumV AS(
+                            SELECT F2.Genere, COUNT(*) AS NumeroVisualizzazioni
+                            FROM Visualizzazione V
+                                INNER JOIN File F
+                                ON F.ID = V.IDFile
+                                INNER JOIN Film F2
+                                ON F2.ID = F.ID 
+                            WHERE V.Dispositivo = _Dispositivo
+                            GROUP BY F2.Genere
+                            ORDER BY NumeroVisualizzazioni
+                            LIMIT 1
+                            )
+                            SELECT Genere
+                            FROM NumV
+                            );
+
+    SET _Paese = (SELECT Paese
+                  FROM Dispositivo
+                  WHERE IndirizzoMAC = _Dispositivo);
+
+    SET _Abbonamento = (SELECT U.TipoAbbonamento
+                        FROM Dispositivo D
+                            INNER JOIN Utente U
+                            ON D.Utente = U.CF
+                        WHERE D.IndirizzoMac = _Dispositivo);
+    
+    SELECT C.IDFile, C.IDFilm, C.Titolo
+    FROM Classifica C
+        LEFT OUTER JOIN Visualizzazione V
+        ON V.IDFile = C.IDFile
+        INNER JOIN Film F
+        ON F.ID = C.IDFilm
+    WHERE V.Dispositivo = _Dispositivo AND C.Paese = _Paese
+        AND C.Abbonamento = _Abbonamento AND GenerePreferito = F.Genere
+    ORDER BY C.TotaleVisualizzazioni DESC
+    LIMIT 2;
 END $$
 DELIMITER ;
