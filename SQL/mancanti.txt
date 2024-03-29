@@ -3,7 +3,6 @@ paeseRestrizione
 pop
 premiazione
 restrizione
-server
 vincita
 visualizzazione
 
