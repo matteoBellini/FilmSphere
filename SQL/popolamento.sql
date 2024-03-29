@@ -1165,7 +1165,7 @@ INSERT INTO FilmSphere.PremiFilm (Nome, Importanza, Categoria) VALUES
 ('Gotham Awards Miglior Film', 3, 'Miglior Film'),
 ('Independent Spirit Awards Miglior Film', 4, 'Miglior Film');
 
-INSERT INTO Vincita VALUES
+INSERT INTO FilmSphere.Vincita VALUES
 (16, 1, "2020-04-04"),
 (14, 9, "2023-03-26"),
 (10, 9, "2024-01-12"),
@@ -1280,7 +1280,7 @@ INSERT INTO Vincita VALUES
 (5, 3, "2024-03-14"),
 (8, 4, "2023-09-30");
 
-INSERT INTO PoP VALUES
+INSERT INTO FilmSphere.PoP VALUES
 (51, '89.74.221.115'),
 (41, '89.74.221.115'),
 (14, '89.74.221.115'),
@@ -1782,7 +1782,7 @@ INSERT INTO PoP VALUES
 (60, '101.129.202.30'),
 (21, '101.129.202.30');
 
-INSERT INTO Premiazione VALUES
+INSERT INTO FilmSphere.Premiazione VALUES
 (1, 13, '2019-3-24'),
 (2, 1, '2019-7-21'),
 (2, 8, '2019-10-22'),
