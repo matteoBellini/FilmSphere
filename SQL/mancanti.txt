@@ -1,6 +1,6 @@
 dispositivo
 paeseRestrizione
-premiazione
+restrizione
 visualizzazione
 
 
