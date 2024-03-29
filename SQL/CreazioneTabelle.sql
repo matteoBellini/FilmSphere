@@ -237,7 +237,7 @@ create table Server(
     CAPBanda integer not null,
     CAPTrasmissione integer not null,
     DimensioneCache integer not null,
-    CaricoAttuale float not null,
+    CaricoAttuale float default 0 not null,
     Paese varchar(20) not null,
     
     foreign key(Paese) references Paese(Nome)
