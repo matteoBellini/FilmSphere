@@ -1881,3 +1881,7 @@ INSERT INTO FilmSphere.Premiazione VALUES
 (38, 13, '2023-3-12'),
 (38, 12, '2023-12-13'),
 (38, 11, '2022-5-4');
+
+Script per Restrizioni fatto, però per inserire restrizioni in cui ci sono solo formati audio o video non si
+può usare NULL perchè nel trigger se la select vede null dà errore. Per cui se vogliamo mettere dei record tali si inseriscono singolarmente
+con delle insert (FormatoAudio) o insert (FormatoVideo).
