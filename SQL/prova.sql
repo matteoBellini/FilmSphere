@@ -1046,8 +1046,8 @@ CREATE PROCEDURE FilmSphere.BUILD_EDGE_SERVER (OUT _check BOOL)
 BEGIN
 	DECLARE finito INTEGER DEFAULT 0;
 	DECLARE IpServer VARCHAR(15) DEFAULT '';
-    DECLARE Latitudine FLOAT DEFAULT 0;
-    DECLARE Longitudine FLOAT DEFAULT 0;
+    DECLARE _Latitudine FLOAT DEFAULT 0;
+    DECLARE _Longitudine FLOAT DEFAULT 0;
     DECLARE cur CURSOR FOR
     	SELECT IndirizzoIP, Latitudine, Longitudine
     	FROM Server;
@@ -1059,8 +1059,8 @@ BEGIN
     OPEN cur;
     
     WHILE finito = 0 DO
-    	FETCH cur INTO IpServer, Latitudine, Longitudine;
-		CALL ADD_EDGE_SERVER(IpServer, Latitudine, Longitudine);
+    	FETCH cur INTO IpServer, _Latitudine, _Longitudine;
+		CALL ADD_EDGE_SERVER(IpServer, _Latitudine, _Longitudine);
     END WHILE;
     
     SET _check = TRUE;
@@ -1070,7 +1070,7 @@ BEGIN
 END $$
 
 DROP PROCEDURE IF EXISTS FilmSphere.ADD_EDGE_SERVER$$
-CREATE PROCEDURE FilmSphere.ADD_EDGE_SERVER(IN IpServer VARCHAR(15), IN Latitudine FLOAT, IN Longitudine FLOAT)
+CREATE PROCEDURE FilmSphere.ADD_EDGE_SERVER(IN IpServer VARCHAR(15), IN _Latitudine FLOAT, IN _Longitudine FLOAT)
 BEGIN
 	DECLARE finito INTEGER DEFAULT 0;
     DECLARE fetchServer VARCHAR(15) DEFAULT '';
@@ -1090,17 +1090,17 @@ BEGIN
     	FETCH cur INTO fetchServer, fetchLat, fetchLong;
         
         SET distanza = ACOS(
-			(COS(Latitudine) * COS(Longitudine) * COS(fetchLat) * COS(fetchLong)) +
-			(COS(Latitudine) * SIN(Longitudine) * COS(fetchLat) * SIN(fetchLong)) +
-			(SIN(Latitudine) * SIN(fetchLat))
+			(COS(_Latitudine) * COS(_Longitudine) * COS(fetchLat) * COS(fetchLong)) +
+			(COS(_Latitudine) * SIN(_Longitudine) * COS(fetchLat) * SIN(fetchLong)) +
+			(SIN(_Latitudine) * SIN(fetchLat))
 			) * 6371;
             
-        IF distanza < 1000 THEN
+        IF distanza < 100000 THEN
         	INSERT INTO EDGE_SERVER VALUES (IpServer, fetchServer, distanza);
         END IF;
-    END WHILE;
+   END WHILE;
 
-    CLOSE cur;
+   CLOSE cur;
 END $$
 DELIMITER ;
 
