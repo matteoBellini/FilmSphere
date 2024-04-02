@@ -2,3 +2,14 @@
 set @_check = 0;
 CALL filmsphere.BUILD_EDGE_SERVER(@_check);
 SELECT @_check;
+
+
+-- ED:7E:78:2A:93:73  0.8533483319296785  1.528358989482813
+-- 09:EA:A5:49:AB:C7  0.3792740282458477  0.47543130831970765
+-- 0C:79:58:97:93:BC  1.1785835401649616  2.7329584725539675
+SET @check = '';
+SET @serverScelto = '';
+
+CALL FilmSphere.find_best_server('ED:7E:78:2A:93:73', 0.8533483319296785, 1.528358989482813, 45, @serverScelto, @check);
+
+SELECT @serverScelto;

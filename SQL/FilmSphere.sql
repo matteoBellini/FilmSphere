@@ -759,12 +759,18 @@ BEGIN
 
     SET carico = (risoluzione / 20 + bitrate / 100) / 600;
 
-    IF _caricoServer + carico > 90 THEN
-        CALL Find_Edge_Server(_server, NEW.IDFile);
-    ELSE
-        UPDATE Server
-        SET CaricoAttuale = CaricoAttuale + carico
-        WHERE IndirizzoIP = _server;
+    IF _server IS NOT NULL THEN
+        IF _caricoServer + carico > 90 THEN
+            CALL Find_Edge_Server(_server, NEW.IDFile);
+        ELSE
+            SET SQL_SAFE_UPDATES = 0;
+
+            UPDATE Server
+            SET CaricoAttuale = CaricoAttuale + carico
+            WHERE IndirizzoIP = _server;
+
+            SET SQL_SAFE_UPDATES = 1;
+        END IF;
     END IF;
 END $$
 DELIMITER ;
@@ -798,12 +804,18 @@ BEGIN
 
     SET carico = (risoluzione / 20 + bitrate / 100) / 600;
 
-    IF _caricoServer + carico > 90 THEN
-        CALL Find_Edge_Server(_server, NEW.IDFile);
-    ELSE
-        UPDATE Server
-        SET CaricoAttuale = CaricoAttuale + carico
-        WHERE IndirizzoIP = _server;
+    IF _server IS NOT NULL THEN
+        IF _caricoServer + carico > 90 THEN
+            CALL Find_Edge_Server(_server, NEW.IDFile);
+        ELSE
+            SET SQL_SAFE_UPDATES = 0;
+
+            UPDATE Server
+            SET CaricoAttuale = CaricoAttuale + carico
+            WHERE IndirizzoIP = _server;
+
+            SET SQL_SAFE_UPDATES = 1;
+        END IF;
     END IF;
 END $$
 DELIMITER ;
@@ -1026,7 +1038,75 @@ BEGIN
     CLOSE cur;
     
     IF distanzaMin > 1500 THEN
-    	CALL CaricaFile(_ServerScelto, _File);
+    	CALL CaricaFile(_ServerScelto, _File, _check);
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS FilmSphere.find_best_server;
+DELIMITER $$
+CREATE PROCEDURE FilmSphere.find_best_server(IN Dispositivo VARCHAR(17), IN _Latitudine FLOAT, IN _Longitudine FLOAT, IN targetFile INTEGER, OUT resultServer VARCHAR(15), OUT _check BOOL)
+BEGIN 
+	DECLARE finito INTEGER DEFAULT 0;
+    DECLARE fetchServer VARCHAR(15) DEFAULT '';
+    DECLARE fetchLat FLOAT DEFAULT 0;
+    DECLARE fetchLong FLOAT DEFAULT 0;
+    DECLARE presenza INTEGER DEFAULT 0;
+    DECLARE distanza FLOAT DEFAULT 0;
+    DECLARE distanzaMin FLOAT DEFAULT 100000;
+    
+    DECLARE cur CURSOR FOR
+    	SELECT S.IndirizzoIP, S.Latitudine, S.Longitudine
+        FROM Server S
+        WHERE S.CaricoAttuale < 90;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+    
+    SET _check = FALSE;
+    SET resultServer = NULL;
+    
+    OPEN cur;
+    
+    ciclo: LOOP
+        IF finito = 1 THEN
+            LEAVE ciclo;
+        END IF;
+
+        FETCH cur INTO fetchServer, fetchLat, fetchLong;
+
+        SET presenza = (SELECT COUNT(*)
+                        FROM PoP 
+                        WHERE IPServer = fetchServer AND IDFile = targetFile);
+
+        IF presenza = 0 THEN
+            ITERATE ciclo;
+        END IF;
+
+        SET distanza = ACOS(
+			(COS(_Latitudine) * COS(_Longitudine) * COS(fetchLat) * COS(fetchLong)) +
+			(COS(_Latitudine) * SIN(_Longitudine) * COS(fetchLat) * SIN(fetchLong)) +
+			(SIN(_Latitudine) * SIN(fetchLat))
+		) * 6371;
+
+        IF distanza < 1500 THEN
+            SET resultServer = fetchServer;
+            LEAVE ciclo;
+        END IF;
+    END LOOP;
+    
+    SET _check = TRUE;
+    CLOSE cur;
+    
+    IF resultServer IS NULL THEN
+        SET resultServer = (SELECT S.IndirizzoIP
+                            FROM Server S
+                            WHERE S.CaricoAttuale < 90 AND ACOS(
+                                                                (COS(_Latitudine) * COS(_Longitudine) * COS(S.Latitudine) * COS(S.Longitudine)) +
+                                                                (COS(_Latitudine) * SIN(_Longitudine) * COS(S.Latitudine) * SIN(S.Longitudine)) +
+                                                                (SIN(_Latitudine) * SIN(S.Latitudine))
+                                                        ) * 6371 < 1500
+                            LIMIT 1);
+    	CALL CaricaFile(resultServer, targetFile, _check);
     END IF;
 END $$
 DELIMITER ;
@@ -1140,7 +1220,7 @@ BEGIN
 
     IF _ServerScelto IS NULL THEN
         CALL Find_Edge_Server_Free_Cache(_Server, _File, _ServerScelto);
-        CALL CaricaFile(_ServerScelto, _File);
+        CALL CaricaFile(_ServerScelto, _File, _check);
 	END IF;
     
     CLOSE cur;
@@ -1597,3 +1677,5 @@ DROP EVENT IF EXISTS FilmSphere.make_classifiche;
 CREATE EVENT FilmSphere.make_classifiche ON SCHEDULE EVERY 7 DAY
 DO
     CALL refresh_classifiche();
+
+
