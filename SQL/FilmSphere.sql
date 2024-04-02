@@ -739,7 +739,7 @@ BEGIN
     DECLARE risoluzione INTEGER DEFAULT 0;
     DECLARE bitrate INTEGER DEFAULT 0;
     DECLARE _server VARCHAR(15) DEFAULT '';
-    DECLARE _caricoServer INTEGER DEFAULT 0;
+    DECLARE _caricoServer FLOAT DEFAULT 0;
 
     SET risoluzione = (SELECT Risoluzione
                        FROM File
@@ -758,6 +758,7 @@ BEGIN
                          WHERE IndirizzoIP = _server);
 
     SET carico = (risoluzione / 20 + bitrate / 100) / 600;
+    -- SET carico = 50;     -- per verificare che il trigger funziona (nel popolamento ci sono pochi utenti)
 
     IF _server IS NOT NULL THEN
         IF _caricoServer + carico > 90 THEN
@@ -766,7 +767,7 @@ BEGIN
             SET SQL_SAFE_UPDATES = 0;
 
             UPDATE Server
-            SET CaricoAttuale = CaricoAttuale + carico
+            SET CaricoAttuale = _caricoServer + carico
             WHERE IndirizzoIP = _server;
 
             SET SQL_SAFE_UPDATES = 1;
@@ -777,14 +778,20 @@ DELIMITER ;
 
 DROP TRIGGER IF EXISTS FilmSphere.AddCaricoUpdate
 DELIMITER $$
-CREATE TRIGGER FilmSphere.AddCarico AFTER UPDATE ON Visualizzazione
+CREATE TRIGGER FilmSphere.AddCaricoUpdate BEFORE UPDATE ON Visualizzazione
 FOR EACH ROW
 BEGIN
     DECLARE carico FLOAT DEFAULT 0;
     DECLARE risoluzione INTEGER DEFAULT 0;
     DECLARE bitrate INTEGER DEFAULT 0;
     DECLARE _server VARCHAR(15) DEFAULT '';
-    DECLARE _caricoServer INTEGER DEFAULT 0;
+    DECLARE _caricoServer FLOAT DEFAULT 0;
+
+    DECLARE vecchioMinutoCorrente TIME;
+
+    SET vecchioMinutoCorrente = (SELECT MinutoCorrente
+                                 FROM Visualizzazione
+                                 WHERE IDFile = NEW.IDFile AND Dispositivo = NEW.Dispositivo);
 
     SET risoluzione = (SELECT Risoluzione
                        FROM File
@@ -804,17 +811,19 @@ BEGIN
 
     SET carico = (risoluzione / 20 + bitrate / 100) / 600;
 
-    IF _server IS NOT NULL THEN
-        IF _caricoServer + carico > 90 THEN
-            CALL Find_Edge_Server(_server, NEW.IDFile);
-        ELSE
-            SET SQL_SAFE_UPDATES = 0;
+    IF vecchioMinutoCorrente < NEW.MinutoCorrente THEN
+        IF _server IS NOT NULL THEN
+            IF _caricoServer + carico > 90 THEN
+                CALL Find_Edge_Server(_server, NEW.IDFile);
+            ELSE
+                SET SQL_SAFE_UPDATES = 0;
 
-            UPDATE Server
-            SET CaricoAttuale = CaricoAttuale + carico
-            WHERE IndirizzoIP = _server;
+                UPDATE Server
+                SET CaricoAttuale = _caricoServer + carico
+                WHERE IndirizzoIP = _server;
 
-            SET SQL_SAFE_UPDATES = 1;
+                SET SQL_SAFE_UPDATES = 1;
+            END IF;
         END IF;
     END IF;
 END $$
@@ -835,7 +844,7 @@ BEGIN
         SET _file = (SELECT IDFile
                      FROM Visualizzazione
                      WHERE Dispositivo = NEW.IndirizzoMac
-                     ORDER BY InizioConnessione DESC
+                     ORDER BY InizioVisualizzazione DESC
                      LIMIT 1);
         SET risoluzione = (SELECT Risoluzione
                            FROM File
@@ -846,6 +855,7 @@ BEGIN
                        WHERE ID = _file);
 
         SET carico = (risoluzione / 20 + bitrate / 100) / 600;
+        -- SET carico = 50;
 
         UPDATE Server
         SET CaricoAttuale = CaricoAttuale - carico
@@ -917,12 +927,15 @@ BEGIN
     ELSE
     	IF temp3 = 0 THEN
         	INSERT INTO Carta
-            VALUES(_NumCarta, _cognTit, _nomeTit, _DataScad, _cvv);
+            VALUES(_NumCarta, _cognTit, _nomTit, _DataScad, _cvv);
         END IF;
+
+        INSERT INTO Utente(CF, Nome, Cognome, DataNascita, Sesso, Mail, PW, Telefono, RinnovoAutomatico)
+        VALUES(_CF, _Nome, _Cognome, _DataNascita, _Sesso, _Mail, _Password, _Telefono, _RinnovoAutomatico);
+        
         INSERT INTO Preferenza
             VALUES(_NumCarta, _CF);
-    	INSERT INTO Utente(CF, Nome, Cognome, DataNascita, Sesso, Mail, Password, Telefono, RinnovoAutomatico)
-        VALUES(_CF, _Nome, _Cognome, _DataNascita, _Sesso, _Mail, _Password, _Telefono, _RinnovoAutomatico);
+    	
         SET _check = TRUE;
     END IF;
     
@@ -972,17 +985,23 @@ BEGIN
     SET temp4 = (SELECT COUNT(*)
                  FROM Carta
                  WHERE Numero = _NumCarta);
+    SELECT temp1, temp2, temp3, temp4;
     
-    IF temp1 = 0 OR temp2 = 0 OR temp3 IS NULL OR temp4 = 0 THEN
+    IF temp1 = 0 OR temp2 = 0 OR temp3 IS NOT NULL OR temp4 = 0 THEN
     	SET _check = FALSE;
 	ELSE
         SET durataAbbonamento = (SELECT Durata
                                  FROM Abbonamento
                                  WHERE Tipo = _abb);
 
+        
+        SET SQL_SAFE_UPDATES = 0;
+
     	UPDATE Utente U
         SET U.TipoAbbonamento = _abb , U.DataScadenza = CURRENT_DATE + INTERVAL durataAbbonamento DAY
     	WHERE U.CF = _CF;
+
+        SET SQL_SAFE_UPDATES = 1;
 
         SET _check = TRUE;
         CALL emissione_fattura(_CF, _abb, _numCarta);
@@ -1199,7 +1218,7 @@ BEGIN
         FROM EDGE_SERVER ED
             INNER JOIN Server S
             ON S.IndirizzoIP = ED.IDEdgeServer
-        WHERE IDServer = _Server AND S.CaricoAttuale < 90
+        WHERE ED.IDServer = _Server AND S.CaricoAttuale < 90
         ORDER BY ED.Distanza;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
@@ -1211,7 +1230,7 @@ BEGIN
         SET _ServerScelto = (SELECT S.IndirizzoIP
                              FROM Server S
                                 INNER JOIN PoP P
-                                ON S.IndirizzoIP = P.IndirizzoIPServer
+                                ON S.IndirizzoIP = P.IPServer
                              WHERE P.IDFile = _File AND S.IndirizzoIP = fetchServer);
         IF _ServerScelto IS NOT NULL THEN 
             SET finito = 1;
@@ -1269,7 +1288,7 @@ BEGIN
                                   ON F.ID = P.IDFile
                               WHERE P.IPServer = fetchServer);
         
-        IF spazioOccupato + dimensioneFilm <= DimensioneCache THEN
+        IF spazioOccupato + dimensioneFilm <= _dimensioneCache THEN
             SET _resultServer = fetchServer;
             SET finito = 1;
         END IF;
@@ -1361,7 +1380,7 @@ BEGIN
 
     SET numDispositiviON = (SELECT COUNT(*)
                             FROM Dispositivo D
-                            WHERE D.Utente = NEW.Utente AND D.FineConnessione IS NULL);
+                            WHERE D.Utente = NEW.Utente AND D.FineConnessione IS NULL AND D.InizioConnessione IS NOT NULL);
 
     IF numDispositiviON = maxDispositiviON THEN
         SIGNAL SQLSTATE '45000'
@@ -1383,20 +1402,34 @@ DROP PROCEDURE IF EXISTS FilmSphere.build_utenti_scadenza;
 DELIMITER $$
 CREATE PROCEDURE FilmSphere.build_utenti_scadenza()
 BEGIN
+    DECLARE fetchCF VARCHAR(16) DEFAULT NULL;
+    DECLARE finito INTEGER DEFAULT 0;
+
+    DECLARE cur CURSOR FOR
+        SELECT CF
+        FROM Utente 
+        WHERE DATEDIFF(DataScadenza, CURRENT_DATE) = 1 AND RinnovoAutomatico = 0;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+
     TRUNCATE UtentiInScadenza;
 
-    INSERT INTO UtentiInScadenza
-    SELECT CF
-    FROM Utente 
-    WHERE DATEDIFF(CURRENT_DATE, DataScadenza) = 1 AND RinnovoAutomatico = 0;
-    
+    OPEN cur;
+
+    WHILE finito = 0 DO
+        FETCH cur INTO fetchCF;
+
+        INSERT IGNORE INTO UtentiInScadenza (Utente) VALUES (fetchCF);
+    END WHILE;
+
+    CLOSE cur;
 END $$
 DELIMITER ;
 
 DROP EVENT IF EXISTS FilmSphere.invioNotificaScadenza;
 CREATE EVENT FilmSphere.invioNotificaScadenza ON SCHEDULE EVERY 1 DAY
 DO 
-    CALL build_utenti_scadenza();
+    CALL FilmSphere.build_utenti_scadenza();
 
 -- --------------------------------------
 -- Rating di un film
@@ -1552,9 +1585,8 @@ BEGIN
                             ORDER BY NumeroVisualizzazioni
                             LIMIT 1
                             )
-                            SELECT Genere
-                            FROM NumV
-                            );
+                          SELECT Genere
+                          FROM NumV);
 
     SET _Paese = (SELECT Paese
                   FROM Dispositivo
@@ -1573,7 +1605,7 @@ BEGIN
         INNER JOIN Film F
         ON F.ID = C.IDFilm
     WHERE V.Dispositivo = _Dispositivo AND C.Paese = _Paese
-        AND C.Abbonamento = _Abbonamento AND GenerePreferito = F.Genere
+        AND C.Abbonamento = _Abbonamento AND F.Genere = GenerePreferito
     ORDER BY C.TotaleVisualizzazioni DESC
     LIMIT 2;
 END $$
