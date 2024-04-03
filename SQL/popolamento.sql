@@ -327,8 +327,8 @@ INSERT INTO FilmSphere.Film (Titolo, Descrizione, Durata, AnnoDiProduzione, Gene
 ('The Godfather', 'The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.', 175, 1972, 'Crime'),
 ('The Shawshank Redemption', 'Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.', 142, 1994, 'Drama'),
 ('The Dark Knight', 'When the menace known as The Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.', 152, 2008, 'Action'),
-('Pulp Fiction', 'The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.', 154, 1994, 'Crime'),
-('Forrest Gump', 'The presidencies of Kennedy and Johnson, the events of Vietnam, Watergate, and other historical events unfold from the perspective of an Alabama man with an IQ of 75, whose only desire is to be reunited with his childhood sweetheart.', 142, 1994, 'Drama'),
+('Pulp Fiction', 'The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.', 154, 1994, 'Action'),
+('Forrest Gump', 'The presidencies of Kennedy and Johnson, the events of Vietnam, Watergate, and other historical events unfold from the perspective of an Alabama man with an IQ of 75, whose only desire is to be reunited with his childhood sweetheart.', 142, 1994, 'Action'),
 ('Inception', 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.', 148, 2010, 'Sci-Fi'),
 ('The Lord of the Rings: The Fellowship of the Ring', 'A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring and save Middle-earth from the Dark Lord Sauron.', 178, 2001, 'Adventure'),
 ('The Matrix', 'A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.', 136, 1999, 'Sci-Fi'),
@@ -337,7 +337,7 @@ INSERT INTO FilmSphere.Film (Titolo, Descrizione, Durata, AnnoDiProduzione, Gene
 ('The Dark Knight Rises', 'Eight years after the Joker''s reign of anarchy, Batman, with the help of the enigmatic Catwoman, is forced from his exile to save Gotham City from the brutal guerrilla terrorist Bane.', 164, 2012, 'Action'),
 ('Fight Club', 'An insomniac office worker and a devil-may-care soapmaker form an underground fight club that evolves into something much, much more.', 139, 1999, 'Drama'),
 ('Goodfellas', 'The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill and his mob partners Jimmy Conway and Tommy DeVito in the Italian-American crime syndicate.', 146, 1990, 'Crime'),
-('The Lord of the Rings: The Fellowship of the Ring', 'A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring and save Middle-earth from the Dark Lord Sauron.', 178, 2001, 'Adventure'),
+('The Lord of the Rings: The Fellowship of the Ring 2', 'A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring and save Middle-earth from the Dark Lord Sauron.', 178, 2021, 'Adventure'),
 ('Gladiator', 'A former Roman General sets out to exact vengeance against the corrupt emperor who murdered his family and sent him into slavery.', 155, 2000, 'History'),
 ('Saving Private Ryan', 'Following the Normandy Landings, a group of U.S. soldiers go behind enemy lines to retrieve a paratrooper whose brothers have been killed in action.', 169, 1998, 'War'),
 ('The Departed', 'An undercover cop and a mole in the police attempt to identify each other while infiltrating an Irish gang in South Boston.', 151, 2006, 'Drama'),
@@ -2324,6 +2324,7 @@ INSERT INTO FilmSphere.Dispositivo (IndirizzoMac, Hardware, Risoluzione, Indiriz
 ('3F:86:1C:8A:07:CD', 'tablet', '1080', '168.156.183.3', 'EFG12345C1123456', 'Somalia', -0.578496, -0.45705),
 ('E8:F6:8D:CF:4A:13', 'tablet', '1440', '44.215.71.76', 'EFG12345K123456K', 'Japan', -0.514211, 2.325025),
 ('E4:17:3F:F1:80:F8', 'PC', '2160', '97.253.194.32', 'GHI12345C123456C', 'Brunei', -0.219923, 2.969601),
+('74:87:3F:F1:89:F8', 'PC', '2160', '97.253.194.32', 'GHI12345C123456C', 'Samoa', -0.219723, 2.949601),
 ('F5:7A:71:17:36:1B', 'tablet', '2160', '199.94.227.189', 'GHI12345M112356M', 'Comoros', -0.455074, 1.843862),
 ('25:2D:A1:C4:EA:7F', 'smartphone', '1440', '253.57.23.183', 'GHI12345U123456U', 'Iraq', 1.357542, 1.988619),
 ('9B:4E:17:F1:AA:9B', 'PC', '720', '38.175.116.153', 'HIJ67890D1123456', 'Malaysia', 1.068739, -2.000237),
@@ -2364,7 +2365,8 @@ INSERT INTO FilmSphere.Dispositivo (IndirizzoMac, Hardware, Risoluzione, Indiriz
 ('F5:F2:D1:B5:80:3E', 'PC', '1080', '231.95.191.83', 'PQR67890P112356P', 'Samoa', -1.329114, 1.713762),
 ('72:5B:E9:BB:FC:0E', 'smartphone', '720', '241.232.204.159', 'STU12345G123456G', 'Albania', 1.387557, 2.578723),
 ('69:AD:58:38:05:74', 'smartphone', '2160', '37.224.168.56', 'UVW12345Q123456Q', 'Ethiopia', 0.175427, -0.422545),
-('EB:B5:C1:7D:A5:76', 'tablet', '720', '176.111.130.208', 'YZA12345A1123456', 'United Arab Emirates', 0.343558, 3.105664);
+('EB:B5:C1:7D:A5:76', 'tablet', '720', '176.111.130.208', 'YZA12345A1123456', 'United Arab Emirates', 0.343558, 3.105664),
+('FF:B5:FF:7D:A5:76', 'tablet', '720', '176.111.130.208', 'VWX67890Z123456Z', 'South Africa', 0.343558, 3.105664);
 
 -- Inserimento di dispositivi attualmente connessi
 INSERT INTO FilmSphere.Dispositivo (IndirizzoMac, Hardware, Risoluzione, IndirizzoIP, Utente, Paese, Latitudine, Longitudine, InizioConnessione, ServerConnesso) VALUES
@@ -2377,7 +2379,9 @@ INSERT INTO FilmSphere.Dispositivo (IndirizzoMac, Hardware, Risoluzione, Indiriz
 ('02:54:14:7B:9C:DA', 'tablet', '720', '52.70.84.58', 'STU67890H112345H', 'Czech Republic', -1.276666, -0.744878, '2024-04-13 08:00:00', '219.34.63.81'),
 ('9E:4B:22:7A:E5:7D', 'tablet', '1440', '73.70.248.6', 'YZA12345I123456I', 'Australia', 1.14214, 1.939554, '2024-04-13 08:00:00', '249.145.31.0');
 
-INSERT INTO FilmSphere.Visualizzazione (IDFile, Dispositivo, MinutoCorrente, InizioVisualizzazione) VALUES 
+INSERT INTO FilmSphere.Visualizzazione (IDFile, Dispositivo, MinutoCorrente, InizioVisualizzazione) VALUES
+(13, '74:87:3F:F1:89:F8', '01:25:30', '2024-04-03 11:47:00'),
+(37, 'FF:B5:FF:7D:A5:76', '00:32:58', '2024-04-06 12:25:58'),
 (21, '4D:A2:6D:7D:BE:7D', '01:45:00', '2024-04-06 06:28:59'),
 (30, '6E:18:6A:57:90:6C', '01:30:24', '2024-04-03 16:32:51'),
 (17, 'FE:FF:B3:1E:80:44', '00:41:29', '2024-04-04 22:43:26'),

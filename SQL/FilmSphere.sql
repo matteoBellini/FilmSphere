@@ -985,7 +985,6 @@ BEGIN
     SET temp4 = (SELECT COUNT(*)
                  FROM Carta
                  WHERE Numero = _NumCarta);
-    SELECT temp1, temp2, temp3, temp4;
     
     IF temp1 = 0 OR temp2 = 0 OR temp3 IS NOT NULL OR temp4 = 0 THEN
     	SET _check = FALSE;
@@ -1572,42 +1571,72 @@ BEGIN
     DECLARE _Paese VARCHAR(20) DEFAULT '';
     DECLARE _Abbonamento VARCHAR(10) DEFAULT '';
     DECLARE GenerePreferito VARCHAR(25) DEFAULT '';
+    DECLARE _RisoluzioneMassima INTEGER DEFAULT 0;
 
-    SET GenerePreferito = (WITH NumV AS(
-                            SELECT F2.Genere, COUNT(*) AS NumeroVisualizzazioni
-                            FROM Visualizzazione V
-                                INNER JOIN File F
-                                ON F.ID = V.IDFile
-                                INNER JOIN Film F2
-                                ON F2.ID = F.ID 
-                            WHERE V.Dispositivo = _Dispositivo
-                            GROUP BY F2.Genere
-                            ORDER BY NumeroVisualizzazioni
-                            LIMIT 1
+    SET GenerePreferito = (WITH NumV AS (
+                                SELECT F2.Genere, COUNT(*) as NumeroVisualizzazioni
+                                FROM Visualizzazione V
+                                    INNER JOIN File F1
+                                    ON F1.ID = V.IDFile
+                                    INNER JOIN Film F2
+                                    ON F1.Film = F2.ID
+                                WHERE V.Dispositivo = _Dispositivo
+                                GROUP BY F2.Genere
+                                ORDER BY NumeroVisualizzazioni DESC
+                                LIMIT 1
                             )
                           SELECT Genere
                           FROM NumV);
 
     SET _Paese = (SELECT Paese
                   FROM Dispositivo
-                  WHERE IndirizzoMAC = _Dispositivo);
+                  WHERE IndirizzoMac = _Dispositivo);
 
-    SET _Abbonamento = (SELECT U.TipoAbbonamento
-                        FROM Dispositivo D
-                            INNER JOIN Utente U
-                            ON D.Utente = U.CF
-                        WHERE D.IndirizzoMac = _Dispositivo);
+    SELECT U.TipoAbbonamento, A.RisoluzioneMassima INTO _Abbonamento, _RisoluzioneMassima
+    FROM Dispositivo D
+        INNER JOIN Utente U
+        ON D.Utente = U.CF
+        INNER JOIN Abbonamento A
+        ON U.TipoAbbonamento = A.Tipo 
+    WHERE D.IndirizzoMac = _Dispositivo;
     
-    SELECT C.IDFile, C.IDFilm, C.Titolo
+    WITH FilmVisti AS(
+        SELECT F.Film
+        FROM Visualizzazione V
+            INNER JOIN File F
+            ON F.ID = V.IDFile
+        WHERE V.Dispositivo = _Dispositivo
+    ),
+    FileBestRes AS (
+        SELECT F1.ID, F1.Film
+        FROM File F1
+            INNER JOIN Film F2
+            ON F1.Film = F2.ID
+            LEFT OUTER JOIN FilmVisti FV
+            ON FV.Film = F1.Film
+        WHERE FV.Film IS NULL AND F2.Genere = GenerePreferito AND F1.Risoluzione = _RisoluzioneMassima
+    )
+    SELECT FBR.ID, FBR.Film, C.Titolo
+    FROM Classifica C
+        INNER JOIN FileBestRes FBR 
+        ON C.IDFilm = FBR.Film
+    WHERE C.Paese = _Paese AND C.Abbonamento = _Abbonamento
+    ORDER BY C.TotaleVisualizzazioni DESC
+    LIMIT 2;
+    
+    /*
+    -- SELECT C.IDFile, C.IDFilm, C.Titolo
+    SELECT *
     FROM Classifica C
         LEFT OUTER JOIN Visualizzazione V
         ON V.IDFile = C.IDFile
         INNER JOIN Film F
         ON F.ID = C.IDFilm
-    WHERE V.Dispositivo = _Dispositivo AND C.Paese = _Paese
+    WHERE V.Dispositivo <> _Dispositivo AND C.Paese = _Paese
         AND C.Abbonamento = _Abbonamento AND F.Genere = GenerePreferito
     ORDER BY C.TotaleVisualizzazioni DESC
-    LIMIT 2;
+    -- LIMIT 2;
+    */
 END $$
 DELIMITER ;
 
@@ -1667,7 +1696,7 @@ CREATE PROCEDURE FilmSphere.refresh_classifiche()
 BEGIN
     DECLARE finito INTEGER DEFAULT 0;
     DECLARE fetchFile INTEGER DEFAULT 0;
-    DECLARE fetchFilm INTEGER DEFAULT 0;
+    DECLARE fetchFilm INTEGER DEFAULT NULL;
     DECLARE fetchTitolo VARCHAR(255) DEFAULT '';
     DECLARE fetchPaese VARCHAR(50) DEFAULT '';
     DECLARE fetchAbbonamento VARCHAR(10) DEFAULT '';
@@ -1702,6 +1731,8 @@ BEGIN
     END WHILE;
 
     CLOSE cur;
+
+    TRUNCATE log_classifiche;
 END $$
 DELIMITER ;
 
@@ -1709,5 +1740,3 @@ DROP EVENT IF EXISTS FilmSphere.make_classifiche;
 CREATE EVENT FilmSphere.make_classifiche ON SCHEDULE EVERY 7 DAY
 DO
     CALL refresh_classifiche();
-
-

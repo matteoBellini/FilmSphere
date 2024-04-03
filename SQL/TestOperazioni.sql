@@ -80,14 +80,12 @@ CALL FilmSphere.ratingFilm(1, @rating);
 SELECT @rating;
 
 
--- Test Caching
-CALL FilmSphere.Caching('68:60:9C:C0:BB:4D');
--- NON RESTITUISCE NIENTE (NON CI SONO ERRORI DI SINTASSI)
-
-
 -- Test Classifiche
 CALL FilmSphere.refresh_classifiche();
 
 SELECT * 
 FROM FilmSphere.Classifica;
--- ERRORE: CONTROLLA IL RESULT SET (la prima riga è sbagliata) 
+
+
+-- Test Caching
+CALL FilmSphere.Caching('74:87:3F:F1:89:F8');
