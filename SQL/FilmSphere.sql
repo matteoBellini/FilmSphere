@@ -1013,7 +1013,7 @@ DELIMITER ;
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS FilmSphere.find_best_server;
 DELIMITER $$
-CREATE PROCEDURE FilmSphere.find_best_server(IN Dispositivo VARCHAR(17), IN _Latitudine FLOAT, IN _Longitudine FLOAT, IN targetFile INTEGER, OUT resultServer VARCHAR(15), OUT _check BOOL)
+CREATE PROCEDURE FilmSphere.find_best_server(IN _Dispositivo VARCHAR(17), IN targetFile INTEGER, OUT resultServer VARCHAR(15), OUT _check BOOL)
 BEGIN 
 	DECLARE finito INTEGER DEFAULT 0;
     DECLARE fetchServer VARCHAR(15) DEFAULT '';
@@ -1022,6 +1022,8 @@ BEGIN
     DECLARE presenza INTEGER DEFAULT 0;
     DECLARE distanza FLOAT DEFAULT 0;
     DECLARE distanzaMin FLOAT DEFAULT 100000;
+    DECLARE _Latitudine FLOAT DEFAULT NULL;
+    DECLARE _Longitudine FLOAT DEFAULT NULL;
     
     DECLARE cur CURSOR FOR
     	SELECT S.IndirizzoIP, S.Latitudine, S.Longitudine
@@ -1029,7 +1031,11 @@ BEGIN
         WHERE S.CaricoAttuale < 90;
     
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
-    
+
+    SELECT Latitudine, Longitudine INTO _Latitudine, _Longitudine
+    FROM Dispositivo
+    WHERE IndirizzoMac = _Dispositivo;
+
     SET _check = FALSE;
     SET resultServer = NULL;
     
