@@ -1268,9 +1268,11 @@ DELIMITER ;
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS FilmSphere.VerificaRestrizioni;
 DELIMITER $$
-CREATE PROCEDURE FilmSphere.VerificaRestrizioni(IN _IndirizzoMAC VARCHAR(17), IN _Utente VARCHAR(16), IN _Paese VARCHAR(50), IN _Film INTEGER, OUT _IDFile INTEGER)
+CREATE PROCEDURE FilmSphere.VerificaRestrizioni(IN _IndirizzoMAC VARCHAR(17), IN _Film INTEGER, OUT _IDFile INTEGER)
 BEGIN
     DECLARE finito INTEGER DEFAULT 0;
+    DECLARE _Utente INTEGER DEFAULT 0;
+    DECLARE _Paese VARCHAR(50) DEFAULT '';
     DECLARE _RisoluzioneMassima INTEGER DEFAULT 0;
     DECLARE fetchID INTEGER DEFAULT 0;
     DECLARE fetchRisoluzione INTEGER DEFAULT 0;
@@ -1292,6 +1294,10 @@ BEGIN
         ORDER BY F.Risoluzione DESC;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+
+    SELECT Utente, Paese INTO _Utente, _Paese
+    FROM Dispositivo
+    WHERE IndirizzoMac = _IndirizzoMAC;
     
     SET _RisoluzioneMassima = (SELECT A.RisoluzioneMassima
                                FROM Utente U
