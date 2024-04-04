@@ -1013,56 +1013,6 @@ DELIMITER ;
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS FilmSphere.find_best_server;
 DELIMITER $$
-CREATE PROCEDURE FilmSphere.find_best_server(IN Dispositivo VARCHAR(17), IN Latitudine FLOAT, IN Longitudine FLOAT, IN targetFile INTEGER, OUT resultServer VARCHAR(15), OUT _check BOOL)
-BEGIN 
-	DECLARE finito INTEGER DEFAULT 0;
-    DECLARE fetchServer VARCHAR(15) DEFAULT '';
-    DECLARE fetchLat FLOAT DEFAULT 0;
-    DECLARE fetchLong FLOAT DEFAULT 0;
-    DECLARE fetchCarico FLOAT DEFAULT 0;
-    DECLARE distanza FLOAT DEFAULT 0;
-    DECLARE distanzaMin FLOAT DEFAULT 100000;
-    
-    DECLARE cur CURSOR FOR
-    	SELECT S.IndirizzoIP, S.Latitudine, S.Longitudine, S.CaricoAttuale
-        FROM Server S
-        	INNER JOIN PoP P
-            ON P.IPServer = S.IndirizzoIP
-        WHERE IDFile = targetFile;
-    
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
-    
-    SET _check = FALSE;
-    
-    OPEN cur;
-    
-    WHILE finito = 0 DO
-    	FETCH cur INTO fetchServer, fetchLat, fetchLong, fetchCarico;
-        SET distanza = ACOS(
-			(COS(Latitudine) * COS(Longitudine) * COS(fetchLat) * COS(fetchLong)) +
-			(COS(Latitudine) * SIN(Longitudine) * COS(fetchLat) * SIN(fetchLong)) +
-			(SIN(Latitudine) * SIN(fetchLat))
-		) * 6371;
-        
-        IF fetchCarico < 90 THEN	
-        	IF distanza < distanzaMin THEN
-        		SET distanzaMin = distanza;
-            	SET resultServer = fetchServer;
-            END IF;
-        END IF;
-    END WHILE;
-    
-    SET _check = TRUE;
-    CLOSE cur;
-    
-    IF distanzaMin > 1500 THEN
-    	CALL CaricaFile(_ServerScelto, _File, _check);
-    END IF;
-END $$
-DELIMITER ;
-
-DROP PROCEDURE IF EXISTS FilmSphere.find_best_server;
-DELIMITER $$
 CREATE PROCEDURE FilmSphere.find_best_server(IN Dispositivo VARCHAR(17), IN _Latitudine FLOAT, IN _Longitudine FLOAT, IN targetFile INTEGER, OUT resultServer VARCHAR(15), OUT _check BOOL)
 BEGIN 
 	DECLARE finito INTEGER DEFAULT 0;
