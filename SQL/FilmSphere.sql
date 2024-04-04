@@ -983,8 +983,8 @@ BEGIN
                  FROM Utente
                  WHERE CF = _CF);
     SET temp4 = (SELECT COUNT(*)
-                 FROM Carta
-                 WHERE Numero = _NumCarta);
+                 FROM Preferenza
+                 WHERE NumCarta = _NumCarta AND CF = _CF);
     
     IF temp1 = 0 OR temp2 = 0 OR temp3 IS NOT NULL OR temp4 = 0 THEN
     	SET _check = FALSE;
