@@ -1364,7 +1364,8 @@ DELIMITER ;
 -- --------------------------------------
 DROP TABLE IF EXISTS FilmSphere.UtentiInScadenza;
 CREATE TABLE FilmSphere.UtentiInScadenza(
-    Utente VARCHAR(16) NOT NULL PRIMARY KEY
+    Utente VARCHAR(16) PRIMARY KEY,
+    Email VARCHAR(50) NOT NULL
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 DROP PROCEDURE IF EXISTS FilmSphere.build_utenti_scadenza;
@@ -1372,10 +1373,11 @@ DELIMITER $$
 CREATE PROCEDURE FilmSphere.build_utenti_scadenza()
 BEGIN
     DECLARE fetchCF VARCHAR(16) DEFAULT NULL;
+    DECLARE fetchMail VARCHAR(50) DEFAULT NULL;
     DECLARE finito INTEGER DEFAULT 0;
 
     DECLARE cur CURSOR FOR
-        SELECT CF
+        SELECT CF, Mail
         FROM Utente 
         WHERE DATEDIFF(DataScadenza, CURRENT_DATE) = 1 AND RinnovoAutomatico = 0;
     
@@ -1386,9 +1388,9 @@ BEGIN
     OPEN cur;
 
     WHILE finito = 0 DO
-        FETCH cur INTO fetchCF;
+        FETCH cur INTO fetchCF, fetchMail;
 
-        INSERT IGNORE INTO UtentiInScadenza (Utente) VALUES (fetchCF);
+        INSERT IGNORE INTO UtentiInScadenza (Utente, Email) VALUES (fetchCF, fetchMail);
     END WHILE;
 
     CLOSE cur;
