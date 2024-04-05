@@ -39,6 +39,8 @@ create table FilmSphere.Recitazione(
 	IdCineasta integer,
     Film integer,
     NomePersonaggio varchar(30) not null,
+
+    primary key(IdCineasta, Film),
     foreign key(IdCineasta) references Cineasta(IdCineasta),
     foreign key(Film) references Film(ID)
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
