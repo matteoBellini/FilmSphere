@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS FilmSphere DEFAULT CHARACTER SET utf8;
 -- --------------------------------
 drop table if exists FilmSphere.Genere;
 create table FilmSphere.Genere(
-	Nome varchar(25) primary key not null
+	Nome varchar(25) primary key
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
 drop table if exists FilmSphere.Film;
