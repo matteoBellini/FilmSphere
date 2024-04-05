@@ -49,6 +49,8 @@ drop table if exists FilmSphere.Regia;
 create table FilmSphere.Regia(
 	IdCineasta integer,
     Film integer,
+
+    primary key(IDCineasta, Film),
     foreign key(IdCineasta) references Cineasta(IdCineasta),
     foreign key(Film) references Film(ID)
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
@@ -74,6 +76,8 @@ create table FilmSphere.Premiazione(
 	IdCineasta integer,
     IdPremio integer,
     DataPremiazione date not null,
+
+    primary key(IdCineasta, IdPremio),
     foreign key(IdCineasta) references Cineasta(IdCineasta),
     foreign key(IdPremio) references PremiCineasta(Id)
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
@@ -83,6 +87,8 @@ create table FilmSphere.Vincita(
 	IdFilm integer,
     IdPremio integer,
     DataVincita date not null,
+
+    primary key(IdFilm, IdPremio),
     foreign key(IdFilm) references Film(ID),
     foreign key(IdPremio) references PremiFilm(Id)
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
