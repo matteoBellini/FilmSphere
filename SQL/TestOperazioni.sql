@@ -80,6 +80,10 @@ CALL FilmSphere.ratingFilm(1, @rating);
 SELECT @rating;
 
 
+-- Test Caching
+CALL FilmSphere.Caching('74:87:3F:F1:89:F8');
+
+
 -- Test Classifiche
 CALL FilmSphere.refresh_classifiche();
 
@@ -87,5 +91,29 @@ SELECT *
 FROM FilmSphere.Classifica;
 
 
--- Test Caching
-CALL FilmSphere.Caching('74:87:3F:F1:89:F8');
+-- Test Bilanciamento del Carico
+USE FilmSphere;
+WITH findServerContents AS (
+    SELECT DISTINCT FM.Titolo
+    FROM PoP P
+        INNER JOIN File FL
+        ON P.IDFile = FL.ID
+        INNER JOIN Film FM
+        ON FM.ID = FL.Film
+    WHERE P.IPServer = '101.129.202.30'
+),
+RatingFilm AS(
+    SELECT F.ID, F.Titolo, (0.2 * F.Recensioni) + (0.4 * F.Critica) + (0.4 * ((0.6 * F.PremiFilm) + (0.4 * F.PremiCineasta))) AS Rating
+    FROM Film F
+    NATURAL JOIN findServerContents FSC
+),
+ContenutiTarget AS (
+    SELECT RF.ID, RF.Titolo
+    FROM RatingFilm RF
+    ORDER BY RF.Rating DESC
+    LIMIT 5
+)
+SELECT ED.IDEdgeServer AS Destinazione, CT.Titolo, CT.ID
+FROM edge_server ED
+    CROSS JOIN ContenutiTarget CT
+WHERE ED.IDServer = '101.129.202.30';

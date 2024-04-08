@@ -58,7 +58,7 @@ create table FilmSphere.Regia(
 drop table if exists FilmSphere.PremiCineasta;
 create table FilmSphere.PremiCineasta(
 	Id integer auto_increment primary key,
-    Nome varchar(50)not null,
+    Nome varchar(50) not null,
     Importanza integer unsigned not null,
     Categoria varchar(50) not null
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
@@ -133,7 +133,7 @@ drop table if exists FilmSphere.Recensione;
 create table FilmSphere.Recensione(
 	CFUtente varchar(16) not null,
     IDFilm integer not null,
-    Testo varchar(500),
+    Testo varchar(500) default null,
     Punteggio integer unsigned not null,
     
     primary key(CFUtente, IDFilm),
@@ -143,13 +143,13 @@ create table FilmSphere.Recensione(
 
 drop table if exists FilmSphere.Critica;
 create table FilmSphere.Critica(
-	CFUtente varchar(16) not null,
+	CFCritico varchar(16) not null,
     IDFilm integer not null,
-    Testo varchar(500),
+    Testo varchar(500) default null,
     Punteggio integer unsigned not null,
     
-    primary key(CFUtente, IDFilm),
-    foreign key(CFUtente) references Utente(CF),
+    primary key(CFCritico, IDFilm),
+    foreign key(CFCritico) references Critico(CF),
     foreign key(IDFilm) references Film(ID)
 )ENGINE = InnoDB DEFAULT CHARSET=latin1;
 
@@ -200,7 +200,7 @@ create table FilmSphere.Server(
     Longitudine float not null,
     CAPBanda integer not null,
     CAPTrasmissione integer not null,
-    DimensioneCache integer not null,
+    DimensioneCache double not null,
     CaricoAttuale float default 0,
     Paese varchar(50) not null,
     
@@ -214,12 +214,12 @@ create table FilmSphere.Dispositivo(
     Hardware varchar(20) not null,
     Risoluzione varchar(10) not null,
     IndirizzoIP varchar(15) not null,
-    InizioConnessione datetime,
-    FineConnessione datetime,
+    InizioConnessione datetime default null,
+    FineConnessione datetime default null,
     Utente varchar(16) not null,
     Paese varchar(50) not null,
-    Latitudine float,
-    Longitudine float,
+    Latitudine float default null,
+    Longitudine float default null,
     ServerConnesso varchar(15) default null,
     
     foreign key(Utente) references Utente(CF),
@@ -1460,15 +1460,15 @@ BEGIN
     WHERE V.IDFilm = NEW.IDFilm;
 
     UPDATE Film
-    SET PremiFilm = punteggioPremi / numeroPremi
+    SET PremiFilm = (punteggioPremi * 2) / numeroPremi
     WHERE ID = NEW.IDFilm;
 END $$
 DELIMITER ;
 
 -- Trigger relativo ai premi di un cineasta
-DROP TRIGGER IF EXISTS FilmSphere.rating_premi_cineasta;
+DROP TRIGGER IF EXISTS FilmSphere.rating_premi_cineasta_recitazione;
 DELIMITER $$
-CREATE TRIGGER FilmSphere.rating_premi_cineasta AFTER INSERT ON Premiazione
+CREATE TRIGGER FilmSphere.rating_premi_cineasta_recitazione AFTER INSERT ON Premiazione
 FOR EACH ROW
 BEGIN
     DECLARE finito INTEGER DEFAULT 0;
@@ -1480,7 +1480,7 @@ BEGIN
 
     DECLARE cur CURSOR FOR
         SELECT Film
-        FROM Recitazione
+        FROM Recitazione 
         WHERE IdCineasta = NEW.IdCineasta;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
@@ -1507,13 +1507,63 @@ BEGIN
         WHERE R.Film = fetchFilm;
 
         UPDATE Film
-        SET PremiCineasta = (ratingRecitazione + ratingRegia) / (numeroPremiRecitazione + numeroPremiRegia)
+        SET PremiCineasta = ((ratingRecitazione + ratingRegia) * 2) / (numeroPremiRecitazione + numeroPremiRegia)
         WHERE ID = fetchFilm;
     END WHILE;
 
     CLOSE cur;
 END $$
 DELIMITER ;
+
+DROP TRIGGER IF EXISTS FilmSphere.rating_premi_cineasta_regia;
+DELIMITER $$
+CREATE TRIGGER FilmSphere.rating_premi_cineasta_regia AFTER INSERT ON Premiazione
+FOR EACH ROW
+BEGIN
+    DECLARE finito INTEGER DEFAULT 0;
+    DECLARE fetchFilm INTEGER DEFAULT 0;
+    DECLARE ratingRegia1 INTEGER DEFAULT 0;
+    DECLARE numeroPremiRegia1 INTEGER DEFAULT 0;
+    DECLARE ratingRegia2 INTEGER DEFAULT 0;
+    DECLARE numeroPremiRegia2 INTEGER DEFAULT 0;
+
+    DECLARE cur CURSOR FOR
+        SELECT Film
+        FROM Regia
+        WHERE IdCineasta = NEW.IdCineasta;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+
+    OPEN cur;
+
+    WHILE finito = 0 DO
+        FETCH cur INTO fetchFilm;
+
+        SELECT SUM(PC.Importanza) AS SommaImportanzaPremi, COUNT(*) AS nPremi INTO ratingRegia, numeroPremiRegia1
+        FROM Recitazione R
+            INNER JOIN Premiazione P
+            ON R.IdCineasta = P.IdCineasta
+            INNER JOIN PremiCineasta PC
+            ON P.IdPremio = PC.ID
+        WHERE R.Film = fetchFilm;
+
+        SELECT SUM(PC.Importanza) AS SommaImportanzaPremi2, COUNT(*) AS nPremi2 INTO ratingRegia2, numeroPremiRegia2
+        FROM Regia R
+            INNER JOIN Premiazione P
+            ON R.IdCineasta = P.IdCineasta
+            INNER JOIN PremiCineasta PC
+            ON P.IdPremio = PC.ID
+        WHERE R.Film = fetchFilm;
+
+        UPDATE Film
+        SET PremiCineasta = ((ratingRegia1 + ratingRegia2) * 2) / (numeroPremiRegia1 + numeroPremiRegia2)
+        WHERE ID = fetchFilm;
+    END WHILE;
+
+    CLOSE cur;
+END $$
+DELIMITER ;
+
 
 -- Procedure che restituisce il Rating di un film in ingresso
 DROP PROCEDURE IF EXISTS FilmSphere.ratingFilm;
@@ -1595,26 +1645,16 @@ BEGIN
     WHERE C.Paese = _Paese AND C.Abbonamento = _Abbonamento
     ORDER BY C.TotaleVisualizzazioni DESC
     LIMIT 2;
-    
-    /*
-    -- SELECT C.IDFile, C.IDFilm, C.Titolo
-    SELECT *
-    FROM Classifica C
-        LEFT OUTER JOIN Visualizzazione V
-        ON V.IDFile = C.IDFile
-        INNER JOIN Film F
-        ON F.ID = C.IDFilm
-    WHERE V.Dispositivo <> _Dispositivo AND C.Paese = _Paese
-        AND C.Abbonamento = _Abbonamento AND F.Genere = GenerePreferito
-    ORDER BY C.TotaleVisualizzazioni DESC
-    -- LIMIT 2;
-    */
 END $$
 DELIMITER ;
 
 
 -- -------------------------------
 -- ANALYTICS
+-- -------------------------------
+
+-- -------------------------------
+-- Classifiche
 -- -------------------------------
 DROP TABLE IF EXISTS FilmSphere.log_classifiche;
 CREATE TABLE FilmSphere.log_classifiche (
@@ -1712,3 +1752,86 @@ DROP EVENT IF EXISTS FilmSphere.make_classifiche;
 CREATE EVENT FilmSphere.make_classifiche ON SCHEDULE EVERY 7 DAY
 DO
     CALL refresh_classifiche();
+
+-- -------------------------------
+-- Bilanciamento del carico 
+-- -------------------------------
+DROP PROCEDURE IF EXISTS FilmSphere.stima_sovraccarico;
+DELIMITER $$
+CREATE PROCEDURE FilmSphere.stima_sovraccarico()
+BEGIN 
+    DECLARE finito INTEGER DEFAULT 0;
+    DECLARE sovraccarico FLOAT DEFAULT 0;
+    DECLARE fetchServer INTEGER DEFAULT 0;
+    DECLARE fetchPaese VARCHAR(50) DEFAULT '';
+    DECLARE fetchAbitanti INTEGER DEFAULT 0;
+    DECLARE numeroServer INTEGER DEFAULT 0;
+    
+    DECLARE cur CURSOR FOR
+        SELECT S.IndirizzoIP, P.Nome, P.NumeroAbitanti
+        FROM Server S
+            INNER JOIN Paese P
+            ON S.Paese = P.Nome;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+
+    OPEN cur;
+
+    WHILE finito = 0 DO
+        FETCH cur INTO fetchServer, fetchPaese, fetchAbitanti;
+
+        SET numeroServer = (SELECT COUNT(*)
+                            FROM Server
+                            WHERE Paese = fetchPaese);
+
+        -- 8.25 Mbps = consumo medio di banda per connessione
+        -- Probabilità che un server vad sovraccarico
+        SET sovraccarico = ((8.25 * fetchAbitanti) / 5500000) / numeroServer;
+        
+        IF sovraccarico < 90 THEN
+            CALL bilanciamento(fetchServer);
+        END IF;
+    END WHILE;
+
+    CLOSE cur;
+END $$
+DELIMITER ;
+
+-- Restituisce i possibili spostamenti di contenuti sugli edge server del server in ingresso
+DROP PROCEDURE IF EXISTS FilmSphere.bilanciamento;
+DELIMITER $$
+CREATE PROCEDURE FilmSphere.bilanciamento(IN _Server VARCHAR(15))
+BEGIN 
+
+    WITH findServerContents AS (
+        SELECT DISTINCT FM.Titolo
+        FROM PoP P
+            INNER JOIN File FL
+            ON P.IDFile = FL.ID
+            INNER JOIN Film FM
+            ON FM.ID = FL.Film
+        WHERE P.IPServer = _Server
+    ),
+    RatingFilm AS(
+        SELECT F.ID, F.Titolo, (0.2 * F.Recensioni) + (0.4 * F.Critica) + (0.4 * ((0.6 * F.PremiFilm) + (0.4 * F.PremiCineasta))) AS Rating
+        FROM Film F
+        NATURAL JOIN findServerContents FSC
+    ),
+    ContenutiTarget AS (
+        SELECT RF.ID, RF.Titolo
+        FROM RatingFilm RF
+        ORDER BY RF.Rating DESC
+        LIMIT 5
+    )
+    SELECT ED.IDEdgeServer AS Destinazione, CT.Titolo, CT.ID
+    FROM edge_server ED
+        CROSS JOIN ContenutiTarget CT
+    WHERE ED.IDServer = _Server;
+
+END $$
+DELIMITER ;
+
+DROP EVENT IF EXISTS FilmSphere.make_bilanciamento
+CREATE EVENT FilmSphere.make_bilanciamento ON SCHEDULE EVERY 7 DAY
+DO
+    CALL stima_sovraccarico();
