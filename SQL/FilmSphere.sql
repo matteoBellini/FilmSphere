@@ -1539,7 +1539,7 @@ BEGIN
     WHILE finito = 0 DO
         FETCH cur INTO fetchFilm;
 
-        SELECT SUM(PC.Importanza) AS SommaImportanzaPremi, COUNT(*) AS nPremi INTO ratingRegia, numeroPremiRegia1
+        SELECT SUM(PC.Importanza) AS SommaImportanzaPremi, COUNT(*) AS nPremi INTO ratingRegia1, numeroPremiRegia1
         FROM Recitazione R
             INNER JOIN Premiazione P
             ON R.IdCineasta = P.IdCineasta
