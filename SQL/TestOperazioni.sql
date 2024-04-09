@@ -45,7 +45,7 @@ SELECT @serverScelto, @check;
 
 -- Test verificaRestrizioni
 SET @fileScelto = '';
-CALL FilmSphere.verificaRestrizioni('0C:79:58:97:93:BC', 'ABC12345S123456S', 'Greece', 2, @fileScelto);
+CALL FilmSphere.verificaRestrizioni('0C:79:58:97:93:BC', 2, @fileScelto);
 
 SELECT @fileScelto;
 
@@ -80,15 +80,15 @@ CALL FilmSphere.ratingFilm(1, @rating);
 SELECT @rating;
 
 
--- Test Caching
-CALL FilmSphere.Caching('74:87:3F:F1:89:F8');
-
-
 -- Test Classifiche
 CALL FilmSphere.refresh_classifiche();
 
 SELECT * 
 FROM FilmSphere.Classifica;
+
+
+-- Test Caching
+CALL FilmSphere.Caching('74:87:3F:F1:89:F8');
 
 
 -- Test Bilanciamento del Carico
