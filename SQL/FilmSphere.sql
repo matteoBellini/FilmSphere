@@ -1105,7 +1105,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-/*DISTANZA COORDINATE: distanza = √((6371 * cos(lat₁) * Δlon)² + (6371 * Δlat)²) (Latitudine e Longitudine memorizzate in radianti)*/
+/*(Latitudine e Longitudine memorizzate in radianti)*/
 DROP TABLE IF EXISTS FilmSphere.EDGE_SERVER;
 DELIMITER $$
 CREATE TABLE FilmSphere.EDGE_SERVER(
@@ -1128,6 +1128,8 @@ BEGIN
     	FROM Server;
     
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET finito = 1;
+
+    TRUNCATE EDGE_SERVER;
     
     SET _check = FALSE;
     
