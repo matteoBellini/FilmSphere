@@ -585,7 +585,7 @@ INSERT INTO FilmSphere.Produzione (IDFilm, Paese) VALUES
 (20, 'Sierra Leone');
 
 
-INSERT INTO FilmSphere.Critica (CFUtente, IDFilm, Testo, Punteggio) VALUES
+INSERT INTO FilmSphere.Critica (CFCritico, IDFilm, Testo, Punteggio) VALUES
 ('STU12345G123456G', 1, 'Critica per il film The Godfather', 4),
 ('BCD67890J123456J', 1, 'Critica per il film The Godfather', 5),
 ('MNO12345E123456E', 2, 'Critica per il film The Shawshank Redemption', 2),
