@@ -1831,7 +1831,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-DROP EVENT IF EXISTS FilmSphere.make_bilanciamento
+DROP EVENT IF EXISTS FilmSphere.make_bilanciamento;
 CREATE EVENT FilmSphere.make_bilanciamento ON SCHEDULE EVERY 7 DAY
 DO
     CALL stima_sovraccarico();
