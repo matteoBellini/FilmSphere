@@ -295,8 +295,8 @@ create table FilmSphere.File(
 
 drop table if exists FilmSphere.PoP;
 create table FilmSphere.PoP(
-	IDFile integer not null,
-    IPServer varchar(15) not null,
+	IDFile integer,
+    IPServer varchar(15),
     
     primary key(IDFile, IPServer),
     foreign key(IDFile) references File(ID),
@@ -587,14 +587,26 @@ END $$
 DELIMITER ;
 
 -- Controllo che la data di scadenza della carta si valida
-DROP TRIGGER IF EXISTS FilmSphere.TCarta;
+DROP TRIGGER IF EXISTS FilmSphere.TCartaInsert;
 DELIMITER $$
-CREATE TRIGGER FilmSphere.TCarta BEFORE INSERT ON Carta
+CREATE TRIGGER FilmSphere.TCartaInsert BEFORE INSERT ON Carta
 FOR EACH ROW
 BEGIN
     IF NEW.DataScadenza < CURRENT_DATE THEN 
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = "Inserimento di una carta scaduta";
+    END IF;
+END $$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS FilmSphere.TCartaUpdate;
+DELIMITER $$
+CREATE TRIGGER FilmSphere.TCartaUpdate BEFORE UPDATE ON Carta
+FOR EACH ROW
+BEGIN
+    IF NEW.DataScadenza < CURRENT_DATE THEN 
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = "Modifica con una data di scadenza non valida";
     END IF;
 END $$
 DELIMITER ;
@@ -1266,8 +1278,10 @@ DROP PROCEDURE IF EXISTS FilmSphere.CaricaFile;
 DELIMITER $$
 CREATE PROCEDURE FilmSphere.CaricaFile (IN _Server VARCHAR(15), IN _file INTEGER, OUT _check BOOL)
 BEGIN
-    INSERT INTO PoP VALUES (_file, _Server);
-    SET _check = TRUE;
+    IF _Server IS NOT NULL AND _File IS NOT NULL THEN
+        INSERT INTO PoP VALUES (_file, _Server);
+        SET _check = TRUE;
+    END IF;
 END $$
 DELIMITER ;
 
