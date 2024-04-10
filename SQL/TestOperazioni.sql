@@ -7,7 +7,6 @@ SELECT @_check;
 -- Test find_best_server
 SET @check = '';
 SET @serverScelto = '';
--- CAMBIARE IL VALORE DI DISPOSITIVO
 CALL FilmSphere.find_best_server('E1:AF:A5:C7:BE:2A', 45, @serverScelto, @check);
 
 SELECT @serverScelto;
